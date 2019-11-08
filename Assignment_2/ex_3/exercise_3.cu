@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <chrono>
+#include <math.h>
 using namespace std::chrono;
 using namespace std;
 #define TPB 256
-#define NUM_PARTICLES 10000
+#define NUM_PARTICLES 100000
 #define NUM_ITERATIONS 1000
 #define N (NUM_PARTICLES/TPB + 1)
 
@@ -78,9 +79,9 @@ int main()
   }
 
   // Print output:
-  for (int ii = 0; ii < 10; ii++) {
-    cout << particlesCPU[ii].position[0] << "\n";
-  }
+  // for (int ii = 0; ii < 10; ii++) {
+  //   cout << particlesCPU[ii].position[0] << "\n";
+  // }
 
   auto stopCPU = high_resolution_clock::now();
   auto durationCPU = duration_cast<microseconds>(stopCPU - startCPU);
@@ -100,19 +101,24 @@ int main()
   cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
 
   // Print output:
-  for (int ii = 0; ii < 10; ii++) {
-    cout << particlesGPU2CPU[ii].position[0] << "\n";
-  }
+  // for (int ii = 0; ii < 10; ii++) {
+  //   cout << particlesGPU2CPU[ii].position[0] << "\n";
+  // }
 
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
   //////////////////////////////////
 
   //////// Compare calculations ////////
-
-
-
-
+  float maxError = 0.0f;
+  for (int particle_i = 0; particle_i < NUM_PARTICLES; particle_i++) {
+    for (int dim = 0; dim < 3; dim++) {
+      maxError = fmax(maxError, fabs(
+        particlesGPU2CPU[particle_i].position[dim] - particlesCPU[particle_i].position[dim]
+      ));
+    }
+  }
+  std::cout << "Max error: " << maxError << std::endl;
 
   delete[] particlesGPU2CPU;
   cudaFree(particlesGPU);
