@@ -31,54 +31,96 @@ __host__ __device__ float gen_random(int seed, int particle_id, int iteration)
   return rand_num;
 }
 
- __global__ void timestep(particle *particles, seed seed, int iteration) {
+__host__ __device__ void updateVelAndPos(particle *particles, seed seed, int iteration, int particle_id)
+{
+  // Velocity update:
+   particles[particle_id].velocity[0] = gen_random(seed.x, particle_id, iteration);
+   particles[particle_id].velocity[1] = gen_random(seed.y, particle_id, iteration);
+   particles[particle_id].velocity[2] = gen_random(seed.z, particle_id, iteration);
+
+   // Position update:
+   particles[particle_id].position[0] = particles[particle_id].position[0] + particles[particle_id].velocity[0];
+   particles[particle_id].position[1] = particles[particle_id].position[1] + particles[particle_id].velocity[1];
+   particles[particle_id].position[2] = particles[particle_id].position[2] + particles[particle_id].velocity[2];
+}
+
+ __global__ void timestepGPU(particle *particles, seed seed, int iteration) {
    const int i = blockIdx.x*blockDim.x + threadIdx.x;
    if (i<NUM_PARTICLES) {
       // printf("Old threadId = %d, velocity.x = %e, position.x = %e\n",
       //    threadIdx.x, particles[i].velocity[0], particles[i].position[0]);
 
-     // Velocity update:
-      particles[i].velocity[0] = gen_random(seed.x, i, iteration);
-      particles[i].velocity[1] = gen_random(seed.y, i, iteration);
-      particles[i].velocity[2] = gen_random(seed.z, i, iteration);
-
-      // Position update:
-      particles[i].position[0] = particles[i].position[0] + particles[i].velocity[0];
-      particles[i].position[1] = particles[i].position[1] + particles[i].velocity[1];
-      particles[i].position[2] = particles[i].position[2] + particles[i].velocity[2];
+      updateVelAndPos(particles, seed, iteration, i);
 
       // printf("New threadId = %d, velocity.x = %e\n", threadIdx.x, particles[i].velocity[0]);
    }
 }
 
+void timestepCPU(particle *particles, seed seed, int iteration) {
+  for (int i = 0; i < NUM_PARTICLES; i++) {
+    updateVelAndPos(particles, seed, iteration, i);
+  }
+}
+
 int main()
 {
   seed seed = {5,6,7};
-  auto start = high_resolution_clock::now();
   particle *particlesCPU = new particle[NUM_PARTICLES];
+  particle *particlesGPU2CPU = new particle[NUM_PARTICLES];
   particle *particlesGPU = new particle[NUM_PARTICLES];
 
+  //////// CPU calculations ////////
+  auto startCPU = high_resolution_clock::now();
+
+  for (int i = 0; i < NUM_ITERATIONS; i++) {
+    // cout << "iteration: " << i <<"\n";
+    timestepCPU(particlesCPU, seed, i);
+  }
+
+  // Print output:
+  for (int ii = 0; ii < 10; ii++) {
+    cout << particlesCPU[ii].position[0] << "\n";
+  }
+
+  auto stopCPU = high_resolution_clock::now();
+  auto durationCPU = duration_cast<microseconds>(stopCPU - startCPU);
+  cout << "---------------\n";
+  //////////////////////////////////
+
+  //////// GPU calculations ////////
+  auto startGPU = high_resolution_clock::now();
   cudaMalloc(&particlesGPU, NUM_PARTICLES*6*sizeof(float));
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
     // cout << "iteration: " << i <<"\n";
-    timestep<<<N, TPB>>>(particlesGPU, seed, i);
+    timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
     // cudaDeviceSynchronize();
   }
 
-  cudaMemcpy(particlesCPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
-
-  auto stop = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(stop - start);
-  cout << "Duration in microseconds: " << duration.count() << endl;
+  cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
 
   // Print output:
-  // for (int ii = 0; ii < NUM_PARTICLES; ii++) {
-  //   cout << particlesCPU[ii].position[0] << "\n";
-  // }
+  for (int ii = 0; ii < 10; ii++) {
+    cout << particlesGPU2CPU[ii].position[0] << "\n";
+  }
 
-  delete[] particlesCPU;
+  auto stopGPU = high_resolution_clock::now();
+  auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
+  //////////////////////////////////
+
+  //////// Compare calculations ////////
+
+
+
+
+
+  delete[] particlesGPU2CPU;
   cudaFree(particlesGPU);
+  delete[] particlesCPU;
+  //////////////////////////////////
+
+  cout << "CPU duration in microseconds: " << durationCPU.count() << endl;
+  cout << "GPU duration in microseconds: " << durationGPU.count() << endl;
 
   return 0;
 }
