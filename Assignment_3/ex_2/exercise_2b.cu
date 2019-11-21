@@ -67,22 +67,21 @@ void timestepCPU(particle *particles, seed seed, int iteration) {
 int main()
 {
   seed seed = {5,6,7};
-  particle *particlesCPU = new particle[NUM_PARTICLES];
-  //particle *particlesGPU2CPU = new particle[NUM_PARTICLES];
-  particle *particlesGPU2CPU = NULL;
-   particle *particlesGPU = new particle[NUM_PARTICLES];
 
-  cudaMallocHost(&particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES);
+  particle* particlesSharedCPU = NULL;
+  cudaMallocManaged(&particlesSharedCPU, NUM_PARTICLES * sizeof(particle));
+  particle* particlesSharedGPU = NULL;
+  cudaMallocManaged(&particlesSharedGPU, NUM_PARTICLES * sizeof(particle));
 
   //////// CPU calculations ////////
   auto startCPU = high_resolution_clock::now();
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
     // cout << "iteration: " << i <<"\n";
-    timestepCPU(particlesCPU, seed, i);
+    timestepCPU(particlesSharedCPU, seed, i);
   }
 
-  // Print output:
+  //Print output:
   // for (int ii = 0; ii < 10; ii++) {
   //   cout << particlesCPU[ii].position[0] << "\n";
   // }
@@ -94,46 +93,27 @@ int main()
 
   //////// GPU calculations ////////
   auto startGPU = high_resolution_clock::now();
-  cudaMalloc(&particlesGPU, NUM_PARTICLES*6*sizeof(float));
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
 
-    // New:
-    cudaMemcpy(particlesGPU, particlesGPU2CPU, NUM_PARTICLES*sizeof(float), cudaMemcpyHostToDevice);
-
     // cout << "iteration: " << i <<"\n";
-    timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
+    timestepGPU<<<N, TPB>>>(particlesSharedGPU, seed, i);
     cudaDeviceSynchronize();
 
-    cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
   }
-
-
 
   // Print output:
   for (int ii = 0; ii < 10; ii++) {
-    cout << particlesGPU2CPU[ii].position[0] << "\n";
+    cout << particlesSharedGPU[ii].position[0] << "\n";
   }
 
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
   //////////////////////////////////
 
-  //////// Compare calculations ////////
-  float maxError = 0.0f;
-  for (int particle_i = 0; particle_i < NUM_PARTICLES; particle_i++) {
-    for (int dim = 0; dim < 3; dim++) {
-      maxError = fmax(maxError, fabs(
-        particlesGPU2CPU[particle_i].position[dim] - particlesCPU[particle_i].position[dim]
-      ));
-    }
-  }
-  std::cout << "Max error: " << maxError << std::endl;
 
-  cudaFree(particlesGPU2CPU);
-  cudaFree(particlesGPU);
-  delete[] particlesCPU;
-  //////////////////////////////////
+  cudaFree(particlesSharedCPU);
+  cudaFree(particlesSharedGPU);
 
   cout << "CPU duration in microseconds: " << durationCPU.count() << endl;
   cout << "GPU duration in microseconds: " << durationGPU.count() << endl;
