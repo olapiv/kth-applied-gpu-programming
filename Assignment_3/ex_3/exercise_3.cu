@@ -132,7 +132,9 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
 	const long row = blockIdx.y * blockDim.y + threadIdx.y;
 	float val = 0.0;
 
-	/* TODO declare shared memory with size TILE_SIZE x TILE_SIZE */
+  __shared__ float shared_blockA[TILE_SIZE * TILE_SIZE];
+  __shared__ float shared_blockB[TILE_SIZE * TILE_SIZE];
+	/* declare shared memory with size TILE_SIZE x TILE_SIZE */
 
 	if (col < size && row < size) {
 		const long local_col = blockIdx.x * TILE_SIZE + threadIdx.x;
@@ -142,10 +144,11 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
 			tile_A[threadIdx.y][threadIdx.x] = A[local_row * size + (m * TILE_SIZE + threadIdx.x)];
 			tile_B[threadIdx.y][threadIdx.x] = B[(m * TILE_SIZE + threadIdx.y) * size + local_col];
 			__syncthreads();
-	
+
 			/* TODO introduce a pragma directive that can potentially improve performance here */
 			for (long k = 0; k < TILE_SIZE; ++k) {
 				/* TODO Perform multiplication here */
+
 			}
 			__syncthreads();
 		}
@@ -229,8 +232,8 @@ int main(int argc, char *argv[])
 	float *C_result = (float*)malloc(sizeof(float)*size*size);
 	float *C_truth = (float*)malloc(sizeof(float)*size*size);
 
-	float *d_A = NULL; 
-	float *d_B = NULL; 
+	float *d_A = NULL;
+	float *d_B = NULL;
 	float *d_C = NULL;
 
 	if (A == NULL || B == NULL || C_truth == NULL || C_result == NULL) {
