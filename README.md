@@ -43,9 +43,16 @@ salloc --nodes=1 -t 01:00:00 -A edu19.DD2360 --reservation=reservation_here
 
 Run program:
 
+Important - do not run program on entry node. It has no CUDA-capable device, so __device__ functions are simply not called and nvprof will return an error.
+Using srun will make sure that a node on Tegner is used, which has a CUDA-capable device.
+
 ```bash
 srun -n 1 ./exercise_3.out
 
 # With profiling:
-srun nvprof -n 1 ./exercise_3.out
+srun -n 1 nvprof ./exercise_3.out
 ```
+
+## Detecting errors
+
+* If __device__ functions are not being called, try implementing [this](https://stackoverflow.com/questions/21990904/cuda-global-function-not-called).

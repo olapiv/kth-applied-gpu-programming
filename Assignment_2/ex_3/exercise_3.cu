@@ -5,8 +5,8 @@
 using namespace std::chrono;
 using namespace std;
 #define TPB 256
-#define NUM_PARTICLES 10
-#define NUM_ITERATIONS 5
+#define NUM_PARTICLES 100000
+#define NUM_ITERATIONS 1000
 #define N (NUM_PARTICLES/TPB + 1)
 
 
@@ -24,11 +24,11 @@ struct seed {
 __host__ __device__ float gen_random(int seed, int particle_id, int iteration)
 {
   float rand_num = (seed * particle_id + iteration) % NUM_PARTICLES;
-  printf("seed = %d, particle_id = %d, iteration = %d, rand_num = %e\n",
-    seed,
-    particle_id,
-    iteration,
-    rand_num);
+  // printf("seed = %d, particle_id = %d, iteration = %d, rand_num = %e\n",
+  //   seed,
+  //   particle_id,
+  //   iteration,
+  //   rand_num);
   return rand_num;
 }
 
@@ -48,12 +48,12 @@ __host__ __device__ void updateVelAndPos(particle *particles, seed seed, int ite
  __global__ void timestepGPU(particle *particles, seed seed, int iteration) {
    const int i = blockIdx.x*blockDim.x + threadIdx.x;
    if (i<NUM_PARTICLES) {
-      printf("Old threadId = %d, velocity.x = %e, position.x = %e\n",
-         threadIdx.x, particles[i].velocity[0], particles[i].position[0]);
+      // printf("Old threadId = %d, velocity.x = %e, position.x = %e\n",
+      //    threadIdx.x, particles[i].velocity[0], particles[i].position[0]);
 
       updateVelAndPos(particles, seed, iteration, i);
 
-      printf("New threadId = %d, velocity.x = %e\n", threadIdx.x, particles[i].velocity[0]);
+      // printf("New threadId = %d, velocity.x = %e\n", threadIdx.x, particles[i].velocity[0]);
    }
 }
 
@@ -93,18 +93,18 @@ int main()
   cudaMalloc(&particlesGPU, sizeof(particle) * NUM_PARTICLES);
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
-    cout << "iteration: " << i <<"\n";
+    // cout << "iteration: " << i <<"\n";
     timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
   }
 
     cudaDeviceSynchronize();
     cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
 
   // Print output:
-  for (int ii = 0; ii < 10; ii++) {
-    cout << particlesGPU2CPU[ii].position[0] << "\n";
-  }
+  // for (int ii = 0; ii < 10; ii++) {
+  //   cout << particlesGPU2CPU[ii].position[0] << "\n";
+  // }
 
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
