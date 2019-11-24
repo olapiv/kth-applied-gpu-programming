@@ -84,7 +84,7 @@ int main()
   // }
 
   auto stopCPU = high_resolution_clock::now();
-  auto durationCPU = duration_cast<microseconds>(stopCPU - startCPU);
+  auto durationCPU = duration_cast<milliseconds>(stopCPU - startCPU);
   cout << "---------------\n";
   //////////////////////////////////
 
@@ -107,7 +107,7 @@ int main()
   // }
 
   auto stopGPU = high_resolution_clock::now();
-  auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
+  auto durationGPU = duration_cast<milliseconds>(stopGPU - startGPU);
   //////////////////////////////////
 
   //////// Compare calculations ////////
@@ -126,8 +126,8 @@ int main()
   delete[] particlesCPU;
   //////////////////////////////////
 
-  cout << "CPU duration in microseconds: " << durationCPU.count() << endl;
-  cout << "GPU duration in microseconds: " << durationGPU.count() << endl;
+  cout << "CPU duration in milliseconds: " << durationCPU.count() << endl;
+  cout << "GPU duration in milliseconds: " << durationGPU.count() << endl;
 
   return 0;
 }
