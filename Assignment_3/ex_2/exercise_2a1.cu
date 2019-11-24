@@ -65,13 +65,15 @@ void timestepCPU(particle *particles, seed seed, int iteration) {
 
 int main()
 {
-  seed seed = {5,6,7};
-  particle *particlesCPU = new particle[NUM_PARTICLES];
-  //particle *particlesGPU2CPU = new particle[NUM_PARTICLES];
-  particle *particlesGPU2CPU = NULL;
-   particle *particlesGPU = new particle[NUM_PARTICLES];
+    seed seed = {5,6,7};
 
-  cudaMallocHost(&particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES);
+    particle *particlesCPU = new particle[NUM_PARTICLES];
+    particle *particlesGPU = new particle[NUM_PARTICLES];
+
+    // particle *particlesGPU2CPU = new particle[NUM_PARTICLES];
+    particle *particlesGPU2CPU = NULL;
+    cudaMallocHost(&particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES);
+
 
   //////// CPU calculations ////////
   auto startCPU = high_resolution_clock::now();
@@ -96,21 +98,18 @@ int main()
   cudaMalloc(&particlesGPU, sizeof(particle) * NUM_PARTICLES);
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
-
-    // New:
-    cudaMemcpy(particlesGPU, particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyHostToDevice);
-
     // cout << "iteration: " << i <<"\n";
     timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
-    cudaDeviceSynchronize();
-
-    cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
+    // cudaDeviceSynchronize();
   }
+
+    cudaDeviceSynchronize();
+    cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
 
   // Print output:
-  for (int ii = 0; ii < 10; ii++) {
-    cout << particlesGPU2CPU[ii].position[0] << "\n";
-  }
+  // for (int ii = 0; ii < 10; ii++) {
+  //   cout << particlesGPU2CPU[ii].position[0] << "\n";
+  // }
 
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<milliseconds>(stopGPU - startGPU);
@@ -127,7 +126,9 @@ int main()
   }
   std::cout << "Max error: " << maxError << std::endl;
 
+  // delete[] particlesGPU2CPU;
   cudaFree(particlesGPU2CPU);
+  
   cudaFree(particlesGPU);
   delete[] particlesCPU;
   //////////////////////////////////

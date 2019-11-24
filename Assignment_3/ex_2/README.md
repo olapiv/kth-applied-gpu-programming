@@ -13,6 +13,12 @@ Reuse your solution from Assignment 2 - Exercise 3 (particle mover) for this exe
 3. Change the appropriate memory allocator to use cudaMallocHost().
 4. Use nvprof to study the time spent on data movement and actual computation, with a large number of particles that can fill the GPU memory. Also, note for the time spent on allocation.
 
+Own implementation:
+
+1. **exercise_2a1.cu**: pinned memory instead of paged memory
+2. **exercise_2a2.cu**: cudaMemcopy after every iteration
+3. **exercise_2a3.cu**: Combination of a1 and a2
+
 ### Exercise 2b - Managed Memory
 
 1. Change the GPU memory allocators to use cudaMallocManaged().
