@@ -90,21 +90,21 @@ int main()
 
   //////// GPU calculations ////////
   auto startGPU = high_resolution_clock::now();
-  cudaMalloc(&particlesGPU, NUM_PARTICLES*6*sizeof(float));
+  cudaMalloc(&particlesGPU, sizeof(particle) * NUM_PARTICLES);
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
-    // cout << "iteration: " << i <<"\n";
+    cout << "iteration: " << i <<"\n";
     timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
-    // cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
   }
 
     cudaDeviceSynchronize();
-    cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
 
   // Print output:
-  // for (int ii = 0; ii < 10; ii++) {
-  //   cout << particlesGPU2CPU[ii].position[0] << "\n";
-  // }
+  for (int ii = 0; ii < 10; ii++) {
+    cout << particlesGPU2CPU[ii].position[0] << "\n";
+  }
 
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
