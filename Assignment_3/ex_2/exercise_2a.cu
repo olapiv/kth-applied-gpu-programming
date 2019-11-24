@@ -87,24 +87,24 @@ int main()
   // }
 
   auto stopCPU = high_resolution_clock::now();
-  auto durationCPU = duration_cast<microseconds>(stopCPU - startCPU);
+  auto durationCPU = duration_cast<milliseconds>(stopCPU - startCPU);
   cout << "---------------\n";
   //////////////////////////////////
 
   //////// GPU calculations ////////
   auto startGPU = high_resolution_clock::now();
-  cudaMalloc(&particlesGPU, NUM_PARTICLES*6*sizeof(float));
+  cudaMalloc(&particlesGPU, sizeof(particle) * NUM_PARTICLES);
 
   for (int i = 0; i < NUM_ITERATIONS; i++) {
 
     // New:
-    cudaMemcpy(particlesGPU, particlesGPU2CPU, NUM_PARTICLES*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(particlesGPU, particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyHostToDevice);
 
     // cout << "iteration: " << i <<"\n";
     timestepGPU<<<N, TPB>>>(particlesGPU, seed, i);
     cudaDeviceSynchronize();
 
-    cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particle) * NUM_PARTICLES, cudaMemcpyDeviceToHost);
   }
 
   // Print output:
@@ -113,7 +113,7 @@ int main()
   }
 
   auto stopGPU = high_resolution_clock::now();
-  auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
+  auto durationGPU = duration_cast<milliseconds>(stopGPU - startGPU);
   //////////////////////////////////
 
   //////// Compare calculations ////////
@@ -132,8 +132,8 @@ int main()
   delete[] particlesCPU;
   //////////////////////////////////
 
-  cout << "CPU duration in microseconds: " << durationCPU.count() << endl;
-  cout << "GPU duration in microseconds: " << durationGPU.count() << endl;
+  cout << "CPU duration in milliseconds: " << durationCPU.count() << endl;
+  cout << "GPU duration in milliseconds: " << durationGPU.count() << endl;
 
   return 0;
 }
