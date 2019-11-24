@@ -1,4 +1,4 @@
-# All Assignments for KTH-course *Applied GPU Programming*
+# All Assignments for KTH-course Applied GPU Programming
 
 *See course description [here](https://www.kth.se/student/kurser/kurs/DD2360?l=en).*
 
@@ -17,7 +17,7 @@ Prepare Environment:
 export PATH=/usr/local/cuda/bin:$PATH  # Load nvcc command
 
 # PDC supercomputer:
-module add cuda/8.0  # PDC supercomputer
+module add cuda/8.0
 module load gcc/6.2.0
 module load openmpi/3.0-gcc-6.2
 module load cuda/10.0
@@ -55,4 +55,4 @@ srun -n 1 nvprof ./exercise_3.out
 
 ## Detecting errors
 
-* If __device__ functions are not being called, try implementing [this](https://stackoverflow.com/questions/21990904/cuda-global-function-not-called).
+* If __ device __ functions are not being called, try implementing [this](https://stackoverflow.com/questions/21990904/cuda-global-function-not-called).

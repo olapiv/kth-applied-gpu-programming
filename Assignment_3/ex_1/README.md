@@ -1,5 +1,7 @@
 # Exercise 1 - CUDA Edge Detector using shared memory
 
+Implements an edge detector for bitmap images.
+
 ## Assignment instructions for code
 
 1. Declare a Shared Memory block within gpu_gaussian() and another one within gpu_sobel().
@@ -8,3 +10,8 @@
 
 ## Q&A for report
 
+## Acknowledgments
+
+- Rome Photo by Willian West on Unsplash
+- HK Photo by Simon Zhu on Unsplash
+- NYC Photo by Matteo Catanese on Unsplash
