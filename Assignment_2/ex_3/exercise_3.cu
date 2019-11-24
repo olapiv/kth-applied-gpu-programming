@@ -98,7 +98,8 @@ int main()
     // cudaDeviceSynchronize();
   }
 
-  cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
 
   // Print output:
   // for (int ii = 0; ii < 10; ii++) {
