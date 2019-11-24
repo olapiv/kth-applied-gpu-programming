@@ -70,8 +70,6 @@ int main()
     particle *particlesGPU2CPU = new particle[NUM_PARTICLES];
     particle *particlesGPU = new particle[NUM_PARTICLES];
 
-    cudaMallocHost(&particlesGPU2CPU, sizeof(particle) * NUM_PARTICLES);
-
     //////// CPU calculations ////////
     auto startCPU = high_resolution_clock::now();
 
@@ -88,7 +86,6 @@ int main()
     auto stopCPU = high_resolution_clock::now();
     auto durationCPU = duration_cast<milliseconds>(stopCPU - startCPU);
     cout << "---------------\n";
-    //////////////////////////////////
 
     //////// GPU calculations ////////
     auto startGPU = high_resolution_clock::now();
@@ -113,7 +110,6 @@ int main()
 
     auto stopGPU = high_resolution_clock::now();
     auto durationGPU = duration_cast<milliseconds>(stopGPU - startGPU);
-    //////////////////////////////////
 
     //////// Compare calculations ////////
     float maxError = 0.0f;
