@@ -10,7 +10,6 @@ using namespace std;
 #define N (NUM_PARTICLES/TPB + 1)
 
 
-
 struct particle {
     float position[3];
     float velocity[3];
@@ -107,8 +106,6 @@ int main()
 
     cudaMemcpy(particlesGPU2CPU, particlesGPU, NUM_PARTICLES*6*sizeof(float), cudaMemcpyDeviceToHost);
   }
-
-
 
   // Print output:
   for (int ii = 0; ii < 10; ii++) {

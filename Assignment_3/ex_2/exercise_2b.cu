@@ -10,7 +10,6 @@ using namespace std;
 #define N (NUM_PARTICLES/TPB + 1)
 
 
-
 struct particle {
     float position[3];
     float velocity[3];
@@ -110,7 +109,6 @@ int main()
   auto stopGPU = high_resolution_clock::now();
   auto durationGPU = duration_cast<microseconds>(stopGPU - startGPU);
   //////////////////////////////////
-
 
   cudaFree(particlesSharedCPU);
   cudaFree(particlesSharedGPU);

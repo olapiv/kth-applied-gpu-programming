@@ -2,6 +2,8 @@
 
 ## Assignment instructions for code
 
+Reuse your solution from Assignment 2 - Exercise 3 (particle mover) for this exercise.
+
 ### Exercise 2a - Pinned Memory
 
 1. Modify the program, such that
