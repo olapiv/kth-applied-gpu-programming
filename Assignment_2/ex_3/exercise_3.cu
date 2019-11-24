@@ -5,8 +5,8 @@
 using namespace std::chrono;
 using namespace std;
 #define TPB 256
-#define NUM_PARTICLES 100000
-#define NUM_ITERATIONS 1000
+#define NUM_PARTICLES 10
+#define NUM_ITERATIONS 5
 #define N (NUM_PARTICLES/TPB + 1)
 
 
