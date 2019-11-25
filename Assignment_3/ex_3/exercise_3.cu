@@ -132,9 +132,9 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
 	const long row = blockIdx.y * blockDim.y + threadIdx.y;
 	float val = 0.0;
 
-  __shared__ float shared_blockA[TILE_SIZE * TILE_SIZE];
-  __shared__ float shared_blockB[TILE_SIZE * TILE_SIZE];
 	/* declare shared memory with size TILE_SIZE x TILE_SIZE */
+	__shared__ float tile_A[TILE_SIZE][TILE_SIZE];
+	__shared__ float tile_B[TILE_SIZE][TILE_SIZE];
 
 	if (col < size && row < size) {
 		const long local_col = blockIdx.x * TILE_SIZE + threadIdx.x;
@@ -145,9 +145,11 @@ void shared_sgemm_kernel(float *C, float *A, float *B, long size)
 			tile_B[threadIdx.y][threadIdx.x] = B[(m * TILE_SIZE + threadIdx.y) * size + local_col];
 			__syncthreads();
 
-			/* TODO introduce a pragma directive that can potentially improve performance here */
+                        #pragma unroll 
 			for (long k = 0; k < TILE_SIZE; ++k) {
-				/* TODO Perform multiplication here */
+				/*Perform multiplication here */
+                                val += tile_A[threadIdx.y][k] * tile_B[k][threadIdx.x];
+
 
 			}
 			__syncthreads();
@@ -181,8 +183,7 @@ void cublas_sgemm(float *C, float *A, float *B, long size)
 	cublasCreate(&handle);
 
 	gettimeofday(&t0, NULL);
-	/* TODO fill in the blanks, do C = BA instead of C = AB */
-	cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, , , , , , , , , , , );
+	cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, size, size, size, &alpha, B, size, A, size, &beta, C, size);
 	checkCudaErrors(cudaDeviceSynchronize());
 	gettimeofday(&t1, NULL);
 	cublasDestroy(handle);
@@ -276,14 +277,14 @@ int main(int argc, char *argv[])
 	naive_sgemm(d_C, d_A, d_B, size);
 	checkCudaErrors(cudaMemcpy(C_result, d_C, sizeof(float)*size*size, cudaMemcpyDeviceToHost));
 	compare_matrix(C_result, C_truth, size, THRESHOLD);
-
+	
 	/* run shared */
 	checkCudaErrors(cudaMemset(d_C, 0, sizeof(float)*size*size));
 	shared_sgemm(d_C, d_A, d_B, size);
 	checkCudaErrors(cudaMemcpy(C_result, d_C, sizeof(float)*size*size, cudaMemcpyDeviceToHost));
 	compare_matrix(C_result, C_truth, size, THRESHOLD);
-
-	/* free */
+	
+	/* free memory */
 	checkCudaErrors(cudaFree(d_A));
 	checkCudaErrors(cudaFree(d_B));
 	checkCudaErrors(cudaFree(d_C));
