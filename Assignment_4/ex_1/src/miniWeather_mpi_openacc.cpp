@@ -235,9 +235,13 @@ void compute_tendencies_x( double *state , double *flux , double *tend ) {
   //Compute the hyperviscosity coeficient
   hv_coef = -hv_beta * dx / (16*dt);
   //Compute fluxes in the x-direction for each cell
+  #pragma acc parallel loop n*z collapse(2)
+  #pragma unroll
   for (k=0; k<nz; k++) {
     for (i=0; i<nx+1; i++) {
       //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
+      #pragma acc parallel loop NUM_VARS collapse(2)
+      #pragma unroll
       for (ll=0; ll<NUM_VARS; ll++) {
         for (s=0; s < sten_size; s++) {
           inds = ll*(nz+2*hs)*(nx+2*hs) + (k+hs)*(nx+2*hs) + i+s;
@@ -265,6 +269,7 @@ void compute_tendencies_x( double *state , double *flux , double *tend ) {
   }
 
   //Use the fluxes to compute tendencies for each cell
+  
   for (ll=0; ll<NUM_VARS; ll++) {
     for (k=0; k<nz; k++) {
       for (i=0; i<nx; i++) {
