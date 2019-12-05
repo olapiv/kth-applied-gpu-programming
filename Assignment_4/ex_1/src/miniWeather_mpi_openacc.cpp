@@ -235,7 +235,7 @@ void compute_tendencies_x( double *state , double *flux , double *tend ) {
   //Compute the hyperviscosity coeficient
   hv_coef = -hv_beta * dx / (16*dt);
   //Compute fluxes in the x-direction for each cell
-  #pragma acc parallel loop n*z collapse(2)
+  #pragma acc parallel loop nz collapse(2)
   #pragma unroll
   for (k=0; k<nz; k++) {
     for (i=0; i<nx+1; i++) {
