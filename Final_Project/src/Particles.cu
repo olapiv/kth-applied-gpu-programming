@@ -72,6 +72,163 @@ void particle_deallocate(struct particles* part)
     delete[] part->q;
 }
 
+__global__ void gpu_mover_PC(struct particles* parts[], struct EMfield* field, struct grid* grd, struct parameters* param) {
+    int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
+    int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
+    
+    part = parts[index_y];
+    if index_x > part->nop {
+        return
+    }
+
+    // auxiliary variables
+    FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
+    FPpart dto2 = .5*dt_sub_cycling, qomdt2 = part->qom*dto2/param->c;
+    FPpart omdtsq, denom, ut, vt, wt, udotb;
+    
+    // local (to the particle) electric and magnetic field
+    FPfield Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
+    
+    // interpolation densities
+    int ix,iy,iz;
+    FPfield weight[2][2][2];
+    FPfield xi[2], eta[2], zeta[2];
+    
+    // intermediate particle position and velocity
+    FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
+
+    // start subcycling
+    for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
+
+        xptilde = part->x[index_x];
+        yptilde = part->y[index_x];
+        zptilde = part->z[index_x];
+        // calculate the average velocity iteratively
+        for(int innter=0; innter < part->NiterMover; innter++){
+            // interpolation G-->P
+            // 2 + to create boundary conditions
+            // Index of the cells:
+            ix = 2 +  int((part->x[index_x] - grd->xStart)*grd->invdx);
+            iy = 2 +  int((part->y[index_x] - grd->yStart)*grd->invdy);
+            iz = 2 +  int((part->z[index_x] - grd->zStart)*grd->invdz);
+            
+            // calculate weights
+            xi[0]   = part->x[index_x] - grd->XN[ix - 1][iy][iz];
+            eta[0]  = part->y[index_x] - grd->YN[ix][iy - 1][iz];
+            zeta[0] = part->z[index_x] - grd->ZN[ix][iy][iz - 1];
+            xi[1]   = grd->XN[ix][iy][iz] - part->x[index_x];
+            eta[1]  = grd->YN[ix][iy][iz] - part->y[index_x];
+            zeta[1] = grd->ZN[ix][iy][iz] - part->z[index_x];
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    for (int k = 0; k < 2; k++)
+                        weight[i][j][k] = xi[i] * eta[j] * zeta[k] * grd->invVOL;
+            
+            // set to zero local electric and magnetic field
+            Exl=0.0, Eyl = 0.0, Ezl = 0.0, Bxl = 0.0, Byl = 0.0, Bzl = 0.0;
+            
+            for (int ii=0; ii < 2; ii++)
+                for (int jj=0; jj < 2; jj++)
+                    for(int kk=0; kk < 2; kk++){
+                        Exl += weight[ii][jj][kk]*field->Ex[ix- ii][iy -jj][iz- kk ];
+                        Eyl += weight[ii][jj][kk]*field->Ey[ix- ii][iy -jj][iz- kk ];
+                        Ezl += weight[ii][jj][kk]*field->Ez[ix- ii][iy -jj][iz -kk ];
+                        Bxl += weight[ii][jj][kk]*field->Bxn[ix- ii][iy -jj][iz -kk ];
+                        Byl += weight[ii][jj][kk]*field->Byn[ix- ii][iy -jj][iz -kk ];
+                        Bzl += weight[ii][jj][kk]*field->Bzn[ix- ii][iy -jj][iz -kk ];
+                    }
+            
+            // end interpolation
+            omdtsq = qomdt2*qomdt2*(Bxl*Bxl+Byl*Byl+Bzl*Bzl);
+            denom = 1.0/(1.0 + omdtsq);
+            // solve the position equation
+            ut= part->u[index_x] + qomdt2*Exl;
+            vt= part->v[index_x] + qomdt2*Eyl;
+            wt= part->w[index_x] + qomdt2*Ezl;
+            udotb = ut*Bxl + vt*Byl + wt*Bzl;
+            // solve the velocity equation
+            uptilde = (ut+qomdt2*(vt*Bzl -wt*Byl + qomdt2*udotb*Bxl))*denom;
+            vptilde = (vt+qomdt2*(wt*Bxl -ut*Bzl + qomdt2*udotb*Byl))*denom;
+            wptilde = (wt+qomdt2*(ut*Byl -vt*Bxl + qomdt2*udotb*Bzl))*denom;
+            // update position
+            part->x[index_x] = xptilde + uptilde*dto2;
+            part->y[index_x] = yptilde + vptilde*dto2;
+            part->z[index_x] = zptilde + wptilde*dto2;
+            
+            
+        } // end of iteration
+        // update the final position and velocity
+        part->u[index_x]= 2.0*uptilde - part->u[index_x];
+        part->v[index_x]= 2.0*vptilde - part->v[index_x];
+        part->w[index_x]= 2.0*wptilde - part->w[index_x];
+        part->x[index_x] = xptilde + uptilde*dt_sub_cycling;
+        part->y[index_x] = yptilde + vptilde*dt_sub_cycling;
+        part->z[index_x] = zptilde + wptilde*dt_sub_cycling;
+        
+        
+        //////////
+        //////////
+        ////////// BC
+                                    
+        // X-DIRECTION: BC particles
+        if (part->x[index_x] > grd->Lx){
+            if (param->PERIODICX==true){ // PERIODIC
+                part->x[index_x] = part->x[index_x] - grd->Lx;
+            } else { // REFLECTING BC
+                part->u[index_x] = -part->u[index_x];
+                part->x[index_x] = 2*grd->Lx - part->x[index_x];
+            }
+        }
+                                                                    
+        if (part->x[index_x] < 0){
+            if (param->PERIODICX==true){ // PERIODIC
+               part->x[index_x] = part->x[index_x] + grd->Lx;
+            } else { // REFLECTING BC
+                part->u[index_x] = -part->u[index_x];
+                part->x[index_x] = -part->x[index_x];
+            }
+        }
+        
+        // Y-DIRECTION: BC particles
+        if (part->y[index_x] > grd->Ly){
+            if (param->PERIODICY==true){ // PERIODIC
+                part->y[index_x] = part->y[index_x] - grd->Ly;
+            } else { // REFLECTING BC
+                part->v[index_x] = -part->v[index_x];
+                part->y[index_x] = 2*grd->Ly - part->y[index_x];
+            }
+        }
+                                                                    
+        if (part->y[index_x] < 0){
+            if (param->PERIODICY==true){ // PERIODIC
+                part->y[index_x] = part->y[index_x] + grd->Ly;
+            } else { // REFLECTING BC
+                part->v[index_x] = -part->v[index_x];
+                part->y[index_x] = -part->y[index_x];
+            }
+        }
+                                                                    
+        // Z-DIRECTION: BC particles
+        if (part->z[index_x] > grd->Lz){
+            if (param->PERIODICZ==true){ // PERIODIC
+                part->z[index_x] = part->z[index_x] - grd->Lz;
+            } else { // REFLECTING BC
+                part->w[index_x] = -part->w[index_x];
+                part->z[index_x] = 2*grd->Lz - part->z[index_x];
+            }
+        }
+                                                                    
+        if (part->z[i] < 0){
+            if (param->PERIODICZ==true){ // PERIODIC
+                part->z[index_x] = part->z[index_x] + grd->Lz;
+            } else { // REFLECTING BC
+                part->w[index_x] = -part->w[index_x];
+                part->z[index_x] = -part->z[index_x];
+            }
+        }
+    }
+}
+
 /** particle mover */
 int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param)
 {
@@ -104,6 +261,8 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
             // calculate the average velocity iteratively
             for(int innter=0; innter < part->NiterMover; innter++){
                 // interpolation G-->P
+                // 2 + to create boundary conditions
+                // Index of the cells:
                 ix = 2 +  int((part->x[i] - grd->xStart)*grd->invdx);
                 iy = 2 +  int((part->y[i] - grd->yStart)*grd->invdy);
                 iz = 2 +  int((part->z[i] - grd->zStart)*grd->invdz);

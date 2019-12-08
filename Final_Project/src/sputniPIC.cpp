@@ -30,6 +30,8 @@
 // Read and output operations
 #include "RW_IO.h"
 
+#define TpBx 512
+
 
 int main(int argc, char **argv){
     
@@ -73,8 +75,24 @@ int main(int argc, char **argv){
     
     // Initialization
     initGEM(&param,&grd,&field,&field_aux,part,ids);
-    
-    
+
+    // Alocation GPU:
+    particles *particlesGPU = new particles[param.ns];
+    cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
+    cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
+
+    EMfield *fieldGPU;
+    cudaMalloc(&fieldGPU, sizeof(EMfield));
+    cudaMemcpy(fieldGPU, field, sizeof(EMfield), cudaMemcpyHostToDevice);
+
+    grid *grdGPU;
+    cudaMalloc(&grdGPU, sizeof(grid));
+    cudaMemcpy(grdGPU, grd, sizeof(EMfield), cudaMemcpyHostToDevice);
+
+    parameters *paramGPU;
+    cudaMalloc(&paramGPU, sizeof(grid));
+    cudaMemcpy(paramGPU, param, sizeof(parameters), cudaMemcpyHostToDevice);
+
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
     // **********************************************************//
@@ -88,7 +106,11 @@ int main(int argc, char **argv){
         // set to zero the densities - needed for interpolation
         setZeroDensities(&idn,ids,&grd,param.ns);
         
+        // gpu_grayscale<<<dim3(bitmap.width/BLOCK_SIZE +1, bitmap.height/BLOCK_SIZE +1, 1), dim3(BLOCK_SIZE, BLOCK_SIZE, 1)>>>(bitmap.width, bitmap.height,
+        //                                 d_bitmap, d_image_out[0]);
         
+        
+        cudaMalloc(&particlesGPU, sizeof(particle) * NUM_PARTICLES);
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
@@ -96,7 +118,12 @@ int main(int argc, char **argv){
             mover_PC(&part[is],&field,&grd,&param);
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
-        
+        // <<<Blocks, TbB>>>
+        // TpB-x: 256
+        // TpB-y: param.ns
+        // x: particle
+        // y: type of particle
+        gpu_mover_PC<<<dim3(part->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
         
         
         // interpolation particle to grid
