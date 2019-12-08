@@ -78,30 +78,29 @@ int main(int argc, char **argv){
 
     // Alocation GPU:
     particles *particlesGPU = new particles[param.ns];
-    particles *particlesGPU2CPU = new particles[param.ns];
     cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
     cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
 
     EMfield *fieldGPU;
-    EMfield *fieldGPU2CPU;
     cudaMalloc(&fieldGPU, sizeof(EMfield));
     cudaMemcpy(fieldGPU, field, sizeof(EMfield), cudaMemcpyHostToDevice);
 
     grid *grdGPU;
-    grid *grdGPU2CPU;
     cudaMalloc(&grdGPU, sizeof(grid));
     cudaMemcpy(grdGPU, grd, sizeof(EMfield), cudaMemcpyHostToDevice);
 
     parameters *paramGPU;
-    parameters *paramGPU2CPU;
     cudaMalloc(&paramGPU, sizeof(grid));
     cudaMemcpy(paramGPU, param, sizeof(parameters), cudaMemcpyHostToDevice);
 
     interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
     interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];
     cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
-    memcpy(&idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);
-    // cudaMemcpy(idsGPU, ids, sizeof(interpDensSpecies) * param.ns, cudaMemcpyHostToDevice);
+    memcpy(&idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
+
+    // Not needed on GPU, but done so results between GPU and CDU don't get mixed.
+    interpDensNet *idnGPU2CPU = new particles[param.ns];
+    memcpy(&idnGPU2CPU, &idn, sizeof(interpDensNet) * param.ns);
 
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
@@ -115,8 +114,8 @@ int main(int argc, char **argv){
     
         // Set to zero the densities - needed for interpolation
         // Only idn and ids are changed
-        setZeroDensities(&idn,ids,&grd,param.ns);
-        setZeroDensities(&idn,&idsGPU2CPU,&grd,param.ns);  // New for GPU
+        setZeroDensities(&idn, ids, &grd, param.ns);
+        setZeroDensities(&idnGPU2CPU, &idsGPU2CPU, &grd, param.ns);  // New for GPU
 
         cudaMemcpy(idsGPU, idsGPU2CPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyHostToDevice);
         
@@ -126,11 +125,6 @@ int main(int argc, char **argv){
             mover_PC(&part[is],&field,&grd,&param);
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
-        // <<<Blocks, TbB>>>
-        // TpB-x: 256
-        // TpB-y: param.ns
-        // x: particle
-        // y: type of particle
         // Only particlesGPU is changed
         gpu_mover_PC<<<dim3(part->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
         
@@ -149,39 +143,34 @@ int main(int argc, char **argv){
         // Only ids is changed
         for (int is=0; is < param.ns; is++)
             applyBCids(&ids[is],&grd,&param);
-
             applyBCids(&idsGPU2CPU[is], &grd, &param);  // New for GPU
 
         // sum over species
         // Only idn is changed
-        sumOverSpecies(&idn,ids,&grd,param.ns);
-
-        sumOverSpecies(&idn,idsGPU2CPU,&grd,param.ns);  // New for GPU
+        sumOverSpecies(&idn, ids, &grd, param.ns);
+        sumOverSpecies(&idnGPU2CPU, idsGPU2CPU, &grd, param.ns);  // New for GPU
 
         // interpolate charge density from center to node
         // Only idn is changed 
         // TODO: Is idn changed though? Why not &idn.rhon?
-        applyBCscalarDensN(idn.rhon,&grd,&param);
-        
-        applyBCscalarDensN(idn.rhon,&grd,&param);  // New for GPU
+        applyBCscalarDensN(idn.rhon, &grd, &param);
+        applyBCscalarDensN(idnGPU2CPU.rhon, &grd, &param);  // New for GPU
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
+            // TODO: Comment this out
             VTK_Write_Vectors(cycle, &grd, &field);
-            VTK_Write_Scalars(cycle, &grd,ids, &idn);
+            VTK_Write_Scalars(cycle, &grd, ids, &idn);
+
+            VTK_Write_Vectors(cycle, &grd, &field);  // New for GPU
+            VTK_Write_Scalars(cycle, &grd, idsGPU2CPU, &idnGPU2CPU);  // New for GPU
         }
         
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
         
     }  // end of one PIC cycle
-
-    cudaMemcpy(particlesGPU2CPU, particlesGPU, sizeof(particles) * param.ns, cudaMemcpyDeviceToHost);
-    // cudaMemcpy(fieldGPU2CPU, fieldGPU, sizeof(EMfield), cudaMemcpyDeviceToHost);  // Not changed
-    // cudaMemcpy(grdGPU2CPU, grdGPU, sizeof(EMfield), cudaMemcpyDeviceToHost);  // Not changed
-    // cudaMemcpy(paramGPU2CPU, paramGPU, sizeof(parameters), cudaMemcpyDeviceToHost);  // Not changed
     
     // GPU de-allocation:
-    delete[] particlesGPU2CPU;
     cudaFree(particlesGPU);
     cudaFree(fieldGPU);
     cudaFree(grdGPU);
@@ -193,10 +182,12 @@ int main(int argc, char **argv){
     field_deallocate(&grd,&field);
     // interp
     interp_dens_net_deallocate(&grd,&idn);
+    interp_dens_net_deallocate(&grd,&idnGPU2CPU);  // New for GPU
     
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
         interp_dens_species_deallocate(&grd,&ids[is]);
+        interp_dens_species_deallocate(&grd,&idsGPU2CPU[is]);  // New for GPU
         particle_deallocate(&part[is]);
     }
     
