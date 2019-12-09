@@ -208,7 +208,7 @@ __device__ __host__ void subcycle_single_particle(struct particles* part, struct
         }
     }
                                                                 
-    if (part->z[i] < 0){
+    if (part->z[index_x] < 0){
         if (param->PERIODICZ==true){ // PERIODIC
             part->z[index_x] = part->z[index_x] + grd->Lz;
         } else { // REFLECTING BC
@@ -222,14 +222,14 @@ __global__ void gpu_mover_PC(struct particles* parts[], struct EMfield* field, s
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
     
-    part = parts[index_y];
-    if index_x > part->nop {
+    particles *part = parts[index_y];
+    if (index_x > part->nop) {
         return
     }
 
     // start subcycling
-    for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
-        subcycle_single_particle(&part, &field, &grd, &param, index_x);
+    for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++) {
+        subcycle_single_particle(part, field, grd, param, index_x);
     }
 }
 
@@ -243,7 +243,7 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
     for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
         // move each particle with new fields
         for (int i=0; i <  part->nop; i++){
-            subcycle_single_particle(&part, &field, &grd, &param, i);                                                            
+            subcycle_single_particle(part, field, grd, param, i);                                                            
         }  // end of subcycling
     } // end of one particle
                                                                         
@@ -306,7 +306,7 @@ __device__ __host__ void interpolate_single_particle(particles* part,interpDensS
     for (int ii = 0; ii < 2; ii++)
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++)
-                temp[ii][jj][kk] = part->v[i] * weight[ii][jj][kk];
+                temp[ii][jj][kk] = part->v[particle_index] * weight[ii][jj][kk];
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++)
             for (int k = 0; k < 2; k++)
@@ -405,12 +405,12 @@ __global__ void gpu_interpP2G(particles* parts, interpDensSpecies* ids, grid* gr
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
 
-    part = parts[index_y];
-    if index_x > part->nop {
+    particles* part = parts[index_y];
+    if (index_x > part->nop) {
         return;
     }
 
-    interpolate_single_particle(&part, &ids, &grd, index_x);
+    interpolate_single_particle(part, ids, grd, index_x);
 }
 
 
@@ -418,6 +418,6 @@ __global__ void gpu_interpP2G(particles* parts, interpDensSpecies* ids, grid* gr
 void interpP2G(particles* part, interpDensSpecies* ids, grid* grd)
 {    
     for (register long long i = 0; i < part->nop; i++) {
-        interpolate_single_particle(&part, &ids, &grd, i);
+        interpolate_single_particle(part, ids, grd, i);
     }
 }
