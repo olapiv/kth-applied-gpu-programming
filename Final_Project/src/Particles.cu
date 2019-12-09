@@ -74,6 +74,22 @@ void particle_deallocate(struct particles* part)
 
 __device__ __host__ void subcycle_single_particle(struct particles* part, struct EMfield* field, struct grid* grd, struct parameters* param, int index_x) {
 
+    // auxiliary variables
+    FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
+    FPpart dto2 = .5*dt_sub_cycling, qomdt2 = part->qom*dto2/param->c;
+    FPpart omdtsq, denom, ut, vt, wt, udotb;
+    
+    // local (to the particle) electric and magnetic field
+    FPfield Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
+    
+    // interpolation densities
+    int ix,iy,iz;
+    FPfield weight[2][2][2];
+    FPfield xi[2], eta[2], zeta[2];
+    
+    // intermediate particle position and velocity
+    FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
+
     xptilde = part->x[index_x];
     yptilde = part->y[index_x];
     zptilde = part->z[index_x];
@@ -211,22 +227,6 @@ __global__ void gpu_mover_PC(struct particles* parts[], struct EMfield* field, s
         return
     }
 
-    // auxiliary variables
-    FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
-    FPpart dto2 = .5*dt_sub_cycling, qomdt2 = part->qom*dto2/param->c;
-    FPpart omdtsq, denom, ut, vt, wt, udotb;
-    
-    // local (to the particle) electric and magnetic field
-    FPfield Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
-    
-    // interpolation densities
-    int ix,iy,iz;
-    FPfield weight[2][2][2];
-    FPfield xi[2], eta[2], zeta[2];
-    
-    // intermediate particle position and velocity
-    FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
-
     // start subcycling
     for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
         subcycle_single_particle(&part, &field, &grd, &param, index_x);
@@ -238,22 +238,6 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
 {
     // print species and subcycling
     std::cout << "***  MOVER with SUBCYCLYING "<< param->n_sub_cycles << " - species " << part->species_ID << " ***" << std::endl;
- 
-    // auxiliary variables
-    FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
-    FPpart dto2 = .5*dt_sub_cycling, qomdt2 = part->qom*dto2/param->c;
-    FPpart omdtsq, denom, ut, vt, wt, udotb;
-    
-    // local (to the particle) electric and magnetic field
-    FPfield Exl=0.0, Eyl=0.0, Ezl=0.0, Bxl=0.0, Byl=0.0, Bzl=0.0;
-    
-    // interpolation densities
-    int ix,iy,iz;
-    FPfield weight[2][2][2];
-    FPfield xi[2], eta[2], zeta[2];
-    
-    // intermediate particle position and velocity
-    FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
     
     // start subcycling
     for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
