@@ -156,7 +156,7 @@ int main(int argc, char **argv){
         // Only idn is changed 
         // TODO: Is idn changed though? Why not &idn.rhon?
         // applyBCscalarDensN(idn.rhon, &grd, &param);
-        applyBCscalarDensN(*idnGPU2CPU.rhon, &grd, &param);  // New for GPU
+        applyBCscalarDensN(idnGPU2CPU->rhon, &grd, &param);  // New for GPU
         
         // write E, B, rho to disk
         if (cycle%param.FieldOutputCycle==0){
@@ -184,7 +184,7 @@ int main(int argc, char **argv){
     field_deallocate(&grd,&field);
     // interp
     interp_dens_net_deallocate(&grd,&idn);
-    interp_dens_net_deallocate(&grd,&idnGPU2CPU);  // New for GPU
+    interp_dens_net_deallocate(&grd,idnGPU2CPU);  // New for GPU
     
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
