@@ -224,7 +224,7 @@ __global__ void gpu_mover_PC(struct particles* parts[], struct EMfield* field, s
     
     particles *part = parts[index_y];
     if (index_x > part->nop) {
-        return
+        return;
     }
 
     // start subcycling
@@ -401,7 +401,7 @@ __device__ __host__ void interpolate_single_particle(particles* part,interpDensS
 
 }
 
-__global__ void gpu_interpP2G(particles* parts, interpDensSpecies* ids, grid* grd) {
+__global__ void gpu_interpP2G(particles* parts[], interpDensSpecies* ids, grid* grd) {
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
 
