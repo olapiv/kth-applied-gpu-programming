@@ -65,7 +65,7 @@ int mover_PC(struct particles*, struct EMfield*, struct grid*, struct parameters
 void interpP2G(struct particles*, struct interpDensSpecies*, struct grid*);
 
 // GPU functions:
-void gpu_mover_PC_wrapper(struct particles* parts, struct EMfield* field, struct grid* grd, struct parameters* param);
-void gpu_interpP2G_wrapper(struct particles* parts, struct interpDensSpecies* ids, struct grid* grd, struct parameters* param):
+void gpu_mover_PC_wrapper(struct particles*, struct EMfield*, struct grid*, struct parameters*);
+void gpu_interpP2G_wrapper(struct particles*, struct interpDensSpecies*, struct grid*, struct parameters*):
 
 #endif
