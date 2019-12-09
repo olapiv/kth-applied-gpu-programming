@@ -32,8 +32,6 @@
 
 #include <cstring>
 
-#define TpBx 512
-
 
 int main(int argc, char **argv){
     
@@ -128,7 +126,7 @@ int main(int argc, char **argv){
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
         // Only particlesGPU is changed
-        gpu_mover_PC<<<dim3(part->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(particlesGPU, fieldGPU, grdGPU, paramGPU);
+        gpu_mover_PC_wrapper(particlesGPU, fieldGPU, grdGPU, paramGPU);
         
         // interpolation particle to grid
         iInterp = cpuSecond(); // start timer for the interpolation step
@@ -137,7 +135,7 @@ int main(int argc, char **argv){
         //    interpP2G(&part[is],&ids[is],&grd);
 
         // Only ids is changed
-        gpu_interpP2G<<<dim3(part->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(particlesGPU, idsGPU, grdGPU);
+        gpu_interpP2G_wrapper(particlesGPU, idsGPU, grdGPU, paramGPU);
 
         cudaMemcpy(idsGPU2CPU, idsGPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyDeviceToHost);
 

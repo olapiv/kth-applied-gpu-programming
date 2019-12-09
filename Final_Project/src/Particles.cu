@@ -2,6 +2,7 @@
 #include "Alloc.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
+#define TpBx 512
 
 /** allocate particle arrays */
 void particle_allocate(struct parameters* param, struct particles* part, int is)
@@ -218,6 +219,10 @@ __device__ __host__ void subcycle_single_particle(struct particles* part, struct
     }
 }
 
+void gpu_mover_PC_wrapper(struct particles* parts, struct EMfield* field, struct grid* grd, struct parameters* param) {
+    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, field, grd, param);
+}
+
 __global__ void gpu_mover_PC(struct particles* parts[], struct EMfield* field, struct grid* grd, struct parameters* param) {
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
@@ -399,6 +404,10 @@ __device__ __host__ void interpolate_single_particle(particles* part,interpDensS
                 ids->pzz[ix -i][iy -j][iz - k] += weight[i][j][k] * grd->invVOL;
 
 
+}
+
+void gpu_interpP2G_wrapper(struct particles* parts, struct interpDensSpecies* ids, struct grid* grd, struct parameters* param ) {
+    gpu_interpP2G<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, ids, grd);
 }
 
 __global__ void gpu_interpP2G(particles* parts[], interpDensSpecies* ids, grid* grd) {
