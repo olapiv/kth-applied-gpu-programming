@@ -30,6 +30,8 @@
 // Read and output operations
 #include "RW_IO.h"
 
+#include <cstring>
+
 #define TpBx 512
 
 
@@ -115,7 +117,7 @@ int main(int argc, char **argv){
         // Set to zero the densities - needed for interpolation
         // Only idn and ids are changed
         // setZeroDensities(&idn, ids, &grd, param.ns);
-        setZeroDensities(idnGPU2CPU, *idsGPU2CPU, &grd, param.ns);  // New for GPU
+        setZeroDensities(idnGPU2CPU, idsGPU2CPU, &grd, param.ns);  // New for GPU
 
         cudaMemcpy(idsGPU, idsGPU2CPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyHostToDevice);
         
@@ -143,7 +145,7 @@ int main(int argc, char **argv){
         // Only ids is changed
         for (int is=0; is < param.ns; is++)
             // applyBCids(&ids[is],&grd,&param);
-            applyBCids(idsGPU2CPU[is], &grd, &param);  // New for GPU
+            applyBCids(&idsGPU2CPU[is], &grd, &param);  // New for GPU
 
         // sum over species
         // Only idn is changed
@@ -163,7 +165,7 @@ int main(int argc, char **argv){
             // VTK_Write_Scalars(cycle, &grd, ids, &idn);
 
             VTK_Write_Vectors(cycle, &grd, &field);  // New for GPU
-            VTK_Write_Scalars(cycle, &grd, *idsGPU2CPU, idnGPU2CPU);  // New for GPU
+            VTK_Write_Scalars(cycle, &grd, idsGPU2CPU, idnGPU2CPU);  // New for GPU
         }
         
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
