@@ -102,6 +102,13 @@ int main(int argc, char **argv){
     interpDensNet *idnGPU2CPU;
     std::memcpy(idnGPU2CPU, &idn, sizeof(interpDensNet) * param.ns);
 
+    int largestNumParticles = 0;
+    for (int i = 0; i < param->ns; i++) {
+        if (part[i].nop > largestNumParticles) {
+            largestNumParticles = part[i].nop;
+        }
+    }
+
     // **********************************************************//
     // **** Start the Simulation!  Cycle index start from 1  *** //
     // **********************************************************//
@@ -126,7 +133,7 @@ int main(int argc, char **argv){
         eMover += (cpuSecond() - iMover); // stop timer for mover
         
         // Only particlesGPU is changed
-        gpu_mover_PC_wrapper(particlesGPU, fieldGPU, grdGPU, paramGPU);
+        gpu_mover_PC_wrapper(particlesGPU, fieldGPU, grdGPU, paramGPU, largestNumParticles);
         
         // interpolation particle to grid
         iInterp = cpuSecond(); // start timer for the interpolation step
@@ -135,7 +142,7 @@ int main(int argc, char **argv){
         //    interpP2G(&part[is],&ids[is],&grd);
 
         // Only ids is changed
-        gpu_interpP2G_wrapper(particlesGPU, idsGPU, grdGPU, paramGPU);
+        gpu_interpP2G_wrapper(particlesGPU, idsGPU, grdGPU, paramGPU, largestNumParticles);
 
         cudaMemcpy(idsGPU2CPU, idsGPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyDeviceToHost);
 
