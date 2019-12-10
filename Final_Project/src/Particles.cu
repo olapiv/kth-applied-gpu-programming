@@ -235,7 +235,7 @@ __global__ void gpu_mover_PC(particles* parts, EMfield* field, grid* grd, parame
 }
 
 void gpu_mover_PC_wrapper(particles* parts, EMfield* field, grid* grd, parameters* param) {
-    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, field, grd, param);
+    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(parts, field, grd, param);
 }
 
 /** particle mover */
@@ -419,7 +419,7 @@ __global__ void gpu_interpP2G(particles* parts, interpDensSpecies* ids, grid* gr
 }
 
 void gpu_interpP2G_wrapper(particles* parts, interpDensSpecies* ids, grid* grd, parameters* param ) {
-    gpu_interpP2G<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, ids, grd);
+    gpu_interpP2G<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(parts, ids, grd);
 }
 
 /** Interpolation Particle --> Grid: This is for species */
