@@ -219,11 +219,11 @@ __device__ __host__ void subcycle_single_particle(particles* part, EMfield* fiel
     }
 }
 
-__global__ void gpu_mover_PC(particles* parts[], EMfield* field, grid* grd, parameters* param) {
+__global__ void gpu_mover_PC(particles* parts, EMfield* field, grid* grd, parameters* param) {
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
     
-    particles *part = parts[index_y];
+    particles *part = &parts[index_y];
     if (index_x > part->nop) {
         return;
     }
