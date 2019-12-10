@@ -235,7 +235,7 @@ __global__ void gpu_mover_PC(particles* parts, EMfield* field, grid* grd, parame
 }
 
 void gpu_mover_PC_wrapper(particles* parts, EMfield* field, grid* grd, parameters* param, int largestNumParticles) {
-    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(parts, field, grd, param);
+    gpu_mover_PC<<<dim3(largestNumParticles / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(parts, field, grd, param);
 }
 
 /** particle mover */

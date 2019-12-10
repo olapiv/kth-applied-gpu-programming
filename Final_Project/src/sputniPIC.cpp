@@ -87,10 +87,10 @@ int main(int argc, char **argv){
 
     grid *grdGPU;
     cudaMalloc(&grdGPU, sizeof(grid));
-    cudaMemcpy(grdGPU, &grd, sizeof(EMfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
 
     parameters *paramGPU;
-    cudaMalloc(&paramGPU, sizeof(grid));
+    cudaMalloc(&paramGPU, sizeof(parameters));
     cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
 
     interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
@@ -103,7 +103,7 @@ int main(int argc, char **argv){
     std::memcpy(idnGPU2CPU, &idn, sizeof(interpDensNet) * param.ns);
 
     int largestNumParticles = 0;
-    for (int i = 0; i < param->ns; i++) {
+    for (int i = 0; i < param.ns; i++) {
         if (part[i].nop > largestNumParticles) {
             largestNumParticles = part[i].nop;
         }
