@@ -219,10 +219,6 @@ __device__ __host__ void subcycle_single_particle(particles* part, EMfield* fiel
     }
 }
 
-void gpu_mover_PC_wrapper(particles* parts, EMfield* field, grid* grd, parameters* param) {
-    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, field, grd, param);
-}
-
 __global__ void gpu_mover_PC(particles* parts[], EMfield* field, grid* grd, parameters* param) {
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
@@ -236,6 +232,10 @@ __global__ void gpu_mover_PC(particles* parts[], EMfield* field, grid* grd, para
     for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++) {
         subcycle_single_particle(part, field, grd, param, index_x);
     }
+}
+
+void gpu_mover_PC_wrapper(particles* parts, EMfield* field, grid* grd, parameters* param) {
+    gpu_mover_PC<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, field, grd, param);
 }
 
 /** particle mover */
@@ -406,10 +406,6 @@ __device__ __host__ void interpolate_single_particle(particles* part,interpDensS
 
 }
 
-void gpu_interpP2G_wrapper(particles* parts, interpDensSpecies* ids, grid* grd, parameters* param ) {
-    gpu_interpP2G<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, ids, grd);
-}
-
 __global__ void gpu_interpP2G(particles* parts[], interpDensSpecies* ids, grid* grd) {
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
@@ -422,6 +418,9 @@ __global__ void gpu_interpP2G(particles* parts[], interpDensSpecies* ids, grid* 
     interpolate_single_particle(part, ids, grd, index_x);
 }
 
+void gpu_interpP2G_wrapper(particles* parts, interpDensSpecies* ids, grid* grd, parameters* param ) {
+    gpu_interpP2G<<<dim3(parts->nop / TpBx + 1, 1, 1), dim3(TpBx, param.ns, 1)>>>(parts, ids, grd);
+}
 
 /** Interpolation Particle --> Grid: This is for species */
 void interpP2G(particles* part, interpDensSpecies* ids, grid* grd)
