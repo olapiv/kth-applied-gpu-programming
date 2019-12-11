@@ -2,6 +2,7 @@
 
 #include "InterpDensNet.h"
 
+
 /** allocated interpolated densities per species */
 void interp_dens_net_allocate(struct grid* grd, struct interpDensNet* idn)
 {

@@ -1,6 +1,25 @@
 #include <iostream>
 #include "Grid.h"
 
+void setGridGPU(struct parameters* param, struct grid* grd, struct grid* grdGPU) {
+
+
+    FPfield *dev_grdXN, *dev_grdYN, *dev_grdZN;
+
+    cudaMalloc(&dev_grdXN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_grdYN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+    cudaMalloc(&dev_grdZN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
+
+    cudaMemcpy(dev_grdXN, grd->XN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_grdYN, grd->YN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_grdZN, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
+
+    cudaMemcpy(&(grdGPU->XN), &dev_grdXN, sizeof(grdGPU->XN), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->YN), &dev_grdYN, sizeof(grdGPU->YN), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->ZN, &dev_grdZN, sizeof(grdGPU->ZN), cudaMemcpyHostToDevice);
+
+}
+
 /** Set up the grid quantities */
 void setGrid(struct parameters* param, struct grid* grd)
 {
