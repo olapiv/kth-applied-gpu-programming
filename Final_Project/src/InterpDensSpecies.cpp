@@ -30,7 +30,6 @@ void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies
     cudaMemcpy(dev_ids_pyz, ids->pyz_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_ids_pzz, ids->pzz_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyHostToDevice);
 
-
     cudaMemcpy(&(idsGPU->rhon), &dev_ids_rhon_flat, sizeof(idsGPU->rhon), cudaMemcpyHostToDevice);
     cudaMemcpy(&(idsGPU->rhoc), &dev_ids_rhoc_flat, sizeof(idsGPU->rhoc), cudaMemcpyHostToDevice);
     cudaMemcpy(&(idsGPU->Jx), &dev_ids_Jx, sizeof(idsGPU->Jx), cudaMemcpyHostToDevice);
@@ -42,30 +41,6 @@ void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies
     cudaMemcpy(&(idsGPU->pyy), &dev_ids_pyy, sizeof(idsGPU->pyy), cudaMemcpyHostToDevice);
     cudaMemcpy(&(idsGPU->pyz), &dev_ids_pyz, sizeof(idsGPU->pyz), cudaMemcpyHostToDevice);
     cudaMemcpy(&(idsGPU->pzz), &dev_ids_pzz, sizeof(idsGPU->pzz), cudaMemcpyHostToDevice);
-    
-    // allocate 3D arrays
-    // rho: 1
-    ids->rhon = newArr3<FPinterp>(&ids->rhon_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    ids->rhoc = newArr3<FPinterp>(&ids->rhoc_flat, grd->nxc, grd->nyc, grd->nzc); // center
-    // Jx: 2
-    ids->Jx   = newArr3<FPinterp>(&ids->Jx_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Jy: 3
-    ids->Jy   = newArr3<FPinterp>(&ids->Jy_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Jz: 4
-    ids->Jz   = newArr3<FPinterp>(&ids->Jz_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pxx: 5
-    ids->pxx  = newArr3<FPinterp>(&ids->pxx_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pxy: 6
-    ids->pxy  = newArr3<FPinterp>(&ids->pxy_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pxz: 7
-    ids->pxz  = newArr3<FPinterp>(&ids->pxz_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pyy: 8
-    ids->pyy  = newArr3<FPinterp>(&ids->pyy_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pyz: 9
-    ids->pyz  = newArr3<FPinterp>(&ids->pyz_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    // Pzz: 10
-    ids->pzz  = newArr3<FPinterp>(&ids->pzz_flat, grd->nxn, grd->nyn, grd->nzn); // nodes
-    
 }
 
 /** allocated interpolated densities per species */

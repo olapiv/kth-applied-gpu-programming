@@ -2,8 +2,7 @@
 #include "Grid.h"
 
 void setGridGPU(struct parameters* param, struct grid* grd, struct grid* grdGPU) {
-
-
+    
     FPfield *dev_grdXN, *dev_grdYN, *dev_grdZN;
 
     cudaMalloc(&dev_grdXN, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));

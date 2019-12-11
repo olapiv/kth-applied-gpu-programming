@@ -102,7 +102,7 @@ void particle_allocate_gpu(struct particles* part, struct particles* particlesGP
     cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
 }
 
-__device__ __host__ void subcycle_single_particle(particles* part, EMfield* field, grid* grd, parameters* param, int index_x) {
+__device__ void subcycle_single_particle(particles* part, EMfield* field, grid* grd, parameters* param, int index_x) {
 
     // auxiliary variables
     FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
@@ -150,12 +150,24 @@ __device__ __host__ void subcycle_single_particle(particles* part, EMfield* fiel
         for (int ii=0; ii < 2; ii++)
             for (int jj=0; jj < 2; jj++)
                 for(int kk=0; kk < 2; kk++){
-                    Exl += weight[ii][jj][kk]*field->Ex[ix- ii][iy -jj][iz- kk ];
-                    Eyl += weight[ii][jj][kk]*field->Ey[ix- ii][iy -jj][iz- kk ];
-                    Ezl += weight[ii][jj][kk]*field->Ez[ix- ii][iy -jj][iz -kk ];
-                    Bxl += weight[ii][jj][kk]*field->Bxn[ix- ii][iy -jj][iz -kk ];
-                    Byl += weight[ii][jj][kk]*field->Byn[ix- ii][iy -jj][iz -kk ];
-                    Bzl += weight[ii][jj][kk]*field->Bzn[ix- ii][iy -jj][iz -kk ];
+                    ex_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Exl += weight[ii][jj][kk]*field->Ex[ex_index_flat];
+                    // Exl += weight[ii][jj][kk]*field->Ex[ix- ii][iy -jj][iz- kk ];
+                    ey_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Eyl += weight[ii][jj][kk]*field->Ey[ey_index_flat];
+                    // Eyl += weight[ii][jj][kk]*field->Ey[ix- ii][iy -jj][iz- kk ];
+                    ez_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Ezl += weight[ii][jj][kk]*field->Ez[ez_index_flat];
+                    // Ezl += weight[ii][jj][kk]*field->Ez[ix- ii][iy -jj][iz -kk ];
+                    bx_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Bxl += weight[ii][jj][kk]*field->Bxn[bx_index_flat];
+                    // Bxl += weight[ii][jj][kk]*field->Bxn[ix- ii][iy -jj][iz -kk ];
+                    by_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Byl += weight[ii][jj][kk]*field->Byn[by_index_flat];
+                    // Byl += weight[ii][jj][kk]*field->Byn[ix- ii][iy -jj][iz -kk ];
+                    bz_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn)
+                    Bzl += weight[ii][jj][kk]*field->Bzn[bz_index_flat];
+                    // Bzl += weight[ii][jj][kk]*field->Bzn[ix- ii][iy -jj][iz -kk ];
                 }
         
         // end interpolation
@@ -285,7 +297,7 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
 } // end of the mover
 
 
-__device__ __host__ void interpolate_single_particle(particles* part,interpDensSpecies* ids, grid* grd, int particle_index) {
+__device__ void interpolate_single_particle(particles* part,interpDensSpecies* ids, grid* grd, int particle_index) {
 
     // index of the cell
     int ix, iy, iz;
