@@ -84,18 +84,18 @@ int main(int argc, char **argv){
     cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
     cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
     for (int is=0; is < param.ns; is++){
-        particle_allocate_gpu(&part[is], &particlesGPU[is])  // Correct the pointers of the arrays
+        particle_allocate_gpu(&part[is], &particlesGPU[is]);  // Correct the pointers of the arrays
     }
 
     EMfield *fieldGPU;
     cudaMalloc(&fieldGPU, sizeof(EMfield));
     cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
-    field_allocate_gpu(&grd, &field, fieldGPU)  // Correct the pointers of the arrays
+    field_allocate_gpu(&grd, &field, fieldGPU);  // Correct the pointers of the arrays
 
-    grid *grdGPU;
+    struct grid *grdGPU;
     cudaMalloc(&grdGPU, sizeof(grid));
     cudaMemcpy(grdGPU, &grd, sizeof(grid), cudaMemcpyHostToDevice);
-    setGridGPU(&param, &grd, grdGPU)  // Correct the pointers of the arrays
+    setGridGPU(&param, &grd, grdGPU);  // Correct the pointers of the arrays
 
     parameters *paramGPU;
     cudaMalloc(&paramGPU, sizeof(parameters));

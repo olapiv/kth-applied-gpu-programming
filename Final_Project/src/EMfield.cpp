@@ -15,7 +15,7 @@ void field_allocate_gpu(struct grid* grd, struct EMfield* field, struct EMfield*
     cudaMalloc(&dev_fieldBzn, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield));
 
     cudaMemcpy(dev_fieldEx, field->Ex_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_fieldEy, field->Ey_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_fieldEy, field->Ey_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_fieldEz, field->Ez_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_fieldBxn, field->Bxn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_fieldByn, field->Byn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);

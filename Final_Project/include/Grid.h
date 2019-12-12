@@ -109,5 +109,6 @@ void lapN2N(FPfield***, FPfield***, grid*);
 /** calculate laplacian on central points, given a scalar field defined on central points */
 void lapC2C(FPfield***, FPfield***, grid*);
 
+void setGridGPU(struct parameters* param, struct grid* grd, struct grid* grdGPU);
 
 #endif
