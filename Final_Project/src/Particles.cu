@@ -198,7 +198,7 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
     //////////
     //////////
     ////////// BC
-                                
+                       
     // X-DIRECTION: BC particles
     if (part->x[particle_index] > grd->Lx){
         if (param->PERIODICX==true){ // PERIODIC
@@ -208,7 +208,7 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
             part->x[particle_index] = 2*grd->Lx - part->x[particle_index];
         }
     }
-                                                                
+
     if (part->x[particle_index] < 0){
         if (param->PERIODICX==true){ // PERIODIC
            part->x[particle_index] = part->x[particle_index] + grd->Lx;
@@ -227,7 +227,7 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
             part->y[particle_index] = 2*grd->Ly - part->y[particle_index];
         }
     }
-                                                                
+    
     if (part->y[particle_index] < 0){
         if (param->PERIODICY==true){ // PERIODIC
             part->y[particle_index] = part->y[particle_index] + grd->Ly;
@@ -236,7 +236,7 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
             part->y[particle_index] = -part->y[particle_index];
         }
     }
-                                                                
+
     // Z-DIRECTION: BC particles
     if (part->z[particle_index] > grd->Lz){
         if (param->PERIODICZ==true){ // PERIODIC
@@ -246,7 +246,7 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
             part->z[particle_index] = 2*grd->Lz - part->z[particle_index];
         }
     }
-                                                                
+
     if (part->z[particle_index] < 0){
         if (param->PERIODICZ==true){ // PERIODIC
             part->z[particle_index] = part->z[particle_index] + grd->Lz;
@@ -289,7 +289,7 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
             subcycle_single_particle(part, field, grd, param, i);                                                            
         }  // end of subcycling
     } // end of one particle
-                                                                        
+
     return(0); // exit succcesfully
 } // end of the mover
 
@@ -477,7 +477,7 @@ __global__ void gpu_interpP2G(particles* parts, interpDensSpecies* ids, grid* gr
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
 
-    particles* part = &parts[index_y];
+    particles* part = &(parts[index_y]);
     if (index_x > part->nop) {
         return;
     }
