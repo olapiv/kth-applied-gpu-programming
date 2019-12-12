@@ -133,22 +133,22 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         iz = 2 +  int((part->z[index_x] - grd->zStart)*grd->invdz);
         
         // calculate weights
-        xi0_index_flat = get_idx(ix - 1, iy, iz, grd->nyn, grd->nzn);
+        long xi0_index_flat = get_idx(ix - 1, iy, iz, grd->nyn, grd->nzn);
         xi[0]   = part->x[index_x] - grd->XN[xi0_index_flat];
         // xi[0]   = part->x[index_x] - grd->XN[ix - 1][iy][iz];
-        eta0_index_flat = get_idx(ix, iy - 1, iz, grd->nyn, grd->nzn);
+        long eta0_index_flat = get_idx(ix, iy - 1, iz, grd->nyn, grd->nzn);
         eta[0]  = part->y[index_x] - grd->YN[eta0_index_flat];
         // eta[0]  = part->y[index_x] - grd->YN[ix][iy - 1][iz];
-        zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
+        long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
         zeta[0] = part->z[index_x] - grd->ZN[zeta0_index_flat];
         // zeta[0] = part->z[index_x] - grd->ZN[ix][iy][iz - 1];
-        xi1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+        long xi1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
         xi[1]   = grd->XN[xi1_index_flat] - part->x[index_x];
         // xi[1]   = grd->XN[ix][iy][iz] - part->x[index_x];
-        eta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+        long eta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
         eta[1]  = grd->YN[eta1_index_flat] - part->y[index_x];
         // eta[1]  = grd->YN[ix][iy][iz] - part->y[index_x];
-        zeta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+        long zeta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
         zeta[1] = grd->ZN[zeta1_index_flat] - part->z[index_x];
         // zeta[1] = grd->ZN[ix][iy][iz] - part->z[index_x];
         for (int i = 0; i < 2; i++)
@@ -162,22 +162,22 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         for (int ii=0; ii < 2; ii++)
             for (int jj=0; jj < 2; jj++)
                 for(int kk=0; kk < 2; kk++){
-                    ex_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long ex_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Exl += weight[ii][jj][kk]*field->Ex[ex_index_flat];
                     // Exl += weight[ii][jj][kk]*field->Ex[ix- ii][iy -jj][iz- kk ];
-                    ey_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long ey_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Eyl += weight[ii][jj][kk]*field->Ey[ey_index_flat];
                     // Eyl += weight[ii][jj][kk]*field->Ey[ix- ii][iy -jj][iz- kk ];
-                    ez_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long ez_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Ezl += weight[ii][jj][kk]*field->Ez[ez_index_flat];
                     // Ezl += weight[ii][jj][kk]*field->Ez[ix- ii][iy -jj][iz -kk ];
-                    bx_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long bx_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Bxl += weight[ii][jj][kk]*field->Bxn[bx_index_flat];
                     // Bxl += weight[ii][jj][kk]*field->Bxn[ix- ii][iy -jj][iz -kk ];
-                    by_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long by_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Byl += weight[ii][jj][kk]*field->Byn[by_index_flat];
                     // Byl += weight[ii][jj][kk]*field->Byn[ix- ii][iy -jj][iz -kk ];
-                    bz_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    long bz_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
                     Bzl += weight[ii][jj][kk]*field->Bzn[bz_index_flat];
                     // Bzl += weight[ii][jj][kk]*field->Bzn[ix- ii][iy -jj][iz -kk ];
                 }
