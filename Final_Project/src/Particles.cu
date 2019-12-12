@@ -158,23 +158,13 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         for (int ii=0; ii < 2; ii++)
             for (int jj=0; jj < 2; jj++)
                 for(int kk=0; kk < 2; kk++){
-                    long ex_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Exl += weight[ii][jj][kk]*field->Ex[ex_index_flat];
-
-                    long ey_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Eyl += weight[ii][jj][kk]*field->Ey[ey_index_flat];
-
-                    long ez_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Ezl += weight[ii][jj][kk]*field->Ez[ez_index_flat];
-
-                    long bx_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Bxl += weight[ii][jj][kk]*field->Bxn[bx_index_flat];
-
-                    long by_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Byl += weight[ii][jj][kk]*field->Byn[by_index_flat];
-
-                    long bz_index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Bzl += weight[ii][jj][kk]*field->Bzn[bz_index_flat];
+                    long index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
+                    Exl += weight[ii][jj][kk]*field->Ex[index_flat];
+                    Eyl += weight[ii][jj][kk]*field->Ey[index_flat];
+                    Ezl += weight[ii][jj][kk]*field->Ez[index_flat];
+                    Bxl += weight[ii][jj][kk]*field->Bxn[index_flat];
+                    Byl += weight[ii][jj][kk]*field->Byn[index_flat];
+                    Bzl += weight[ii][jj][kk]*field->Bzn[index_flat];
                 }
         
         // end interpolation
@@ -329,15 +319,10 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
     long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
     zeta[0] = part->z[particle_index] - grd->ZN[zeta0_index_flat];
 
-    long x1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-    xi[1]   = grd->XN[x1_index_flat] - part->x[particle_index];
-
-    long eta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-    eta[1]  = grd->YN[eta1_index_flat] - part->y[particle_index];
-
-    long zeta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-    zeta[1] = grd->ZN[zeta1_index_flat] - part->z[particle_index];
-
+    long 1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+    xi[1]   = grd->XN[1_index_flat] - part->x[particle_index];
+    eta[1]  = grd->YN[1_index_flat] - part->y[particle_index];
+    zeta[1] = grd->ZN[1_index_flat] - part->z[particle_index];
 
     // calculate the weights for different nodes
     for (int ii = 0; ii < 2; ii++)
