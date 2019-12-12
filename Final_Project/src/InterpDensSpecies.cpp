@@ -4,7 +4,7 @@
 /** allocated interpolated densities per species */
 void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies* ids, struct interpDensSpecies* idsGPU)
 {
-    FPinterp *dev_ids_rhon, *dev_ids_rhoc, *dev_ids_Jx, *dev_ids_Jy, *dev_ids_Jy, *dev_ids_Jz, *dev_ids_pxx, *dev_ids_pxy, *dev_ids_pxz, *dev_ids_pyy, *dev_ids_pyz, *dev_ids_pzz;
+    FPinterp *dev_ids_rhon, *dev_ids_rhoc, *dev_ids_Jx, *dev_ids_Jy, *dev_ids_Jz, *dev_ids_pxx, *dev_ids_pxy, *dev_ids_pxz, *dev_ids_pyy, *dev_ids_pyz, *dev_ids_pzz;
 
     cudaMalloc(&dev_ids_rhon, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp));
     cudaMalloc(&dev_ids_rhoc, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp));
