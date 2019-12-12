@@ -102,7 +102,7 @@ void particle_allocate_gpu(struct particles* part, struct particles* particlesGP
     cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
 }
 
-__device__ void subcycle_single_particle(particles* part, EMfield* field, grid* grd, parameters* param, int index_x) {
+__device__ void subcycle_single_particle(particles* part, EMfield* field, grid* grd, parameters* param, int particle_index) {
 
     // auxiliary variables
     FPpart dt_sub_cycling = (FPpart) param->dt/((double) part->n_sub_cycles);
@@ -120,32 +120,32 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
     // intermediate particle position and velocity
     FPpart xptilde, yptilde, zptilde, uptilde, vptilde, wptilde;
 
-    xptilde = part->x[index_x];
-    yptilde = part->y[index_x];
-    zptilde = part->z[index_x];
+    xptilde = part->x[particle_index];
+    yptilde = part->y[particle_index];
+    zptilde = part->z[particle_index];
     // calculate the average velocity iteratively
     for(int innter=0; innter < part->NiterMover; innter++){
         // interpolation G-->P
         // 2 + to create boundary conditions
         // Index of the cells:
-        ix = 2 +  int((part->x[index_x] - grd->xStart)*grd->invdx);
-        iy = 2 +  int((part->y[index_x] - grd->yStart)*grd->invdy);
-        iz = 2 +  int((part->z[index_x] - grd->zStart)*grd->invdz);
+        ix = 2 +  int((part->x[particle_index] - grd->xStart)*grd->invdx);
+        iy = 2 +  int((part->y[particle_index] - grd->yStart)*grd->invdy);
+        iz = 2 +  int((part->z[particle_index] - grd->zStart)*grd->invdz);
         
         // calculate weights
         long xi0_index_flat = get_idx(ix - 1, iy, iz, grd->nyn, grd->nzn);
-        xi[0]   = part->x[index_x] - grd->XN[xi0_index_flat];
+        xi[0]   = part->x[particle_index] - grd->XN[xi0_index_flat];
 
         long eta0_index_flat = get_idx(ix, iy - 1, iz, grd->nyn, grd->nzn);
-        eta[0]  = part->y[index_x] - grd->YN[eta0_index_flat];
+        eta[0]  = part->y[particle_index] - grd->YN[eta0_index_flat];
 
         long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
-        zeta[0] = part->z[index_x] - grd->ZN[zeta0_index_flat];
+        zeta[0] = part->z[particle_index] - grd->ZN[zeta0_index_flat];
 
         long 1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-        xi[1]   = grd->XN[1_index_flat] - part->x[index_x];
-        eta[1]  = grd->YN[1_index_flat] - part->y[index_x];
-        zeta[1] = grd->ZN[1_index_flat] - part->z[index_x];
+        xi[1]   = grd->XN[1_index_flat] - part->x[particle_index];
+        eta[1]  = grd->YN[1_index_flat] - part->y[particle_index];
+        zeta[1] = grd->ZN[1_index_flat] - part->z[particle_index];
 
         for (int ii = 0; ii < 2; ii++)
             for (int jj = 0; jj < 2; jj++)
@@ -171,28 +171,28 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         omdtsq = qomdt2*qomdt2*(Bxl*Bxl+Byl*Byl+Bzl*Bzl);
         denom = 1.0/(1.0 + omdtsq);
         // solve the position equation
-        ut= part->u[index_x] + qomdt2*Exl;
-        vt= part->v[index_x] + qomdt2*Eyl;
-        wt= part->w[index_x] + qomdt2*Ezl;
+        ut= part->u[particle_index] + qomdt2*Exl;
+        vt= part->v[particle_index] + qomdt2*Eyl;
+        wt= part->w[particle_index] + qomdt2*Ezl;
         udotb = ut*Bxl + vt*Byl + wt*Bzl;
         // solve the velocity equation
         uptilde = (ut+qomdt2*(vt*Bzl -wt*Byl + qomdt2*udotb*Bxl))*denom;
         vptilde = (vt+qomdt2*(wt*Bxl -ut*Bzl + qomdt2*udotb*Byl))*denom;
         wptilde = (wt+qomdt2*(ut*Byl -vt*Bxl + qomdt2*udotb*Bzl))*denom;
         // update position
-        part->x[index_x] = xptilde + uptilde*dto2;
-        part->y[index_x] = yptilde + vptilde*dto2;
-        part->z[index_x] = zptilde + wptilde*dto2;
+        part->x[particle_index] = xptilde + uptilde*dto2;
+        part->y[particle_index] = yptilde + vptilde*dto2;
+        part->z[particle_index] = zptilde + wptilde*dto2;
         
         
     } // end of iteration
     // update the final position and velocity
-    part->u[index_x]= 2.0*uptilde - part->u[index_x];
-    part->v[index_x]= 2.0*vptilde - part->v[index_x];
-    part->w[index_x]= 2.0*wptilde - part->w[index_x];
-    part->x[index_x] = xptilde + uptilde*dt_sub_cycling;
-    part->y[index_x] = yptilde + vptilde*dt_sub_cycling;
-    part->z[index_x] = zptilde + wptilde*dt_sub_cycling;
+    part->u[particle_index]= 2.0*uptilde - part->u[particle_index];
+    part->v[particle_index]= 2.0*vptilde - part->v[particle_index];
+    part->w[particle_index]= 2.0*wptilde - part->w[particle_index];
+    part->x[particle_index] = xptilde + uptilde*dt_sub_cycling;
+    part->y[particle_index] = yptilde + vptilde*dt_sub_cycling;
+    part->z[particle_index] = zptilde + wptilde*dt_sub_cycling;
     
     
     //////////
@@ -200,59 +200,59 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
     ////////// BC
                                 
     // X-DIRECTION: BC particles
-    if (part->x[index_x] > grd->Lx){
+    if (part->x[particle_index] > grd->Lx){
         if (param->PERIODICX==true){ // PERIODIC
-            part->x[index_x] = part->x[index_x] - grd->Lx;
+            part->x[particle_index] = part->x[particle_index] - grd->Lx;
         } else { // REFLECTING BC
-            part->u[index_x] = -part->u[index_x];
-            part->x[index_x] = 2*grd->Lx - part->x[index_x];
+            part->u[particle_index] = -part->u[particle_index];
+            part->x[particle_index] = 2*grd->Lx - part->x[particle_index];
         }
     }
                                                                 
-    if (part->x[index_x] < 0){
+    if (part->x[particle_index] < 0){
         if (param->PERIODICX==true){ // PERIODIC
-           part->x[index_x] = part->x[index_x] + grd->Lx;
+           part->x[particle_index] = part->x[particle_index] + grd->Lx;
         } else { // REFLECTING BC
-            part->u[index_x] = -part->u[index_x];
-            part->x[index_x] = -part->x[index_x];
+            part->u[particle_index] = -part->u[particle_index];
+            part->x[particle_index] = -part->x[particle_index];
         }
     }
     
     // Y-DIRECTION: BC particles
-    if (part->y[index_x] > grd->Ly){
+    if (part->y[particle_index] > grd->Ly){
         if (param->PERIODICY==true){ // PERIODIC
-            part->y[index_x] = part->y[index_x] - grd->Ly;
+            part->y[particle_index] = part->y[particle_index] - grd->Ly;
         } else { // REFLECTING BC
-            part->v[index_x] = -part->v[index_x];
-            part->y[index_x] = 2*grd->Ly - part->y[index_x];
+            part->v[particle_index] = -part->v[particle_index];
+            part->y[particle_index] = 2*grd->Ly - part->y[particle_index];
         }
     }
                                                                 
-    if (part->y[index_x] < 0){
+    if (part->y[particle_index] < 0){
         if (param->PERIODICY==true){ // PERIODIC
-            part->y[index_x] = part->y[index_x] + grd->Ly;
+            part->y[particle_index] = part->y[particle_index] + grd->Ly;
         } else { // REFLECTING BC
-            part->v[index_x] = -part->v[index_x];
-            part->y[index_x] = -part->y[index_x];
+            part->v[particle_index] = -part->v[particle_index];
+            part->y[particle_index] = -part->y[particle_index];
         }
     }
                                                                 
     // Z-DIRECTION: BC particles
-    if (part->z[index_x] > grd->Lz){
+    if (part->z[particle_index] > grd->Lz){
         if (param->PERIODICZ==true){ // PERIODIC
-            part->z[index_x] = part->z[index_x] - grd->Lz;
+            part->z[particle_index] = part->z[particle_index] - grd->Lz;
         } else { // REFLECTING BC
-            part->w[index_x] = -part->w[index_x];
-            part->z[index_x] = 2*grd->Lz - part->z[index_x];
+            part->w[particle_index] = -part->w[particle_index];
+            part->z[particle_index] = 2*grd->Lz - part->z[particle_index];
         }
     }
                                                                 
-    if (part->z[index_x] < 0){
+    if (part->z[particle_index] < 0){
         if (param->PERIODICZ==true){ // PERIODIC
-            part->z[index_x] = part->z[index_x] + grd->Lz;
+            part->z[particle_index] = part->z[particle_index] + grd->Lz;
         } else { // REFLECTING BC
-            part->w[index_x] = -part->w[index_x];
-            part->z[index_x] = -part->z[index_x];
+            part->w[particle_index] = -part->w[particle_index];
+            part->z[particle_index] = -part->z[particle_index];
         }
     }
 }
@@ -261,8 +261,8 @@ __global__ void gpu_mover_PC(particles* parts, EMfield* field, grid* grd, parame
     int index_x = blockIdx.x * blockDim.x + threadIdx.x;  // Particle number
     int index_y = blockIdx.y * blockDim.y + threadIdx.y;  // Type of particle
     
-    particles *part = &parts[index_y];
-    if (index_x > part->nop) {
+    particles *part = &(parts[index_y]);
+    if (index_x >= part->nop) {
         return;
     }
 
