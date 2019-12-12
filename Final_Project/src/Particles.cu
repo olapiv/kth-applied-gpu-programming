@@ -142,14 +142,10 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
         zeta[0] = part->z[index_x] - grd->ZN[zeta0_index_flat];
 
-        long xi1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-        xi[1]   = grd->XN[xi1_index_flat] - part->x[index_x];
-
-        long eta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-        eta[1]  = grd->YN[eta1_index_flat] - part->y[index_x];
-
-        long zeta1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-        zeta[1] = grd->ZN[zeta1_index_flat] - part->z[index_x];
+        long 1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+        xi[1]   = grd->XN[1_index_flat] - part->x[index_x];
+        eta[1]  = grd->YN[1_index_flat] - part->y[index_x];
+        zeta[1] = grd->ZN[1_index_flat] - part->z[index_x];
 
         for (int ii = 0; ii < 2; ii++)
             for (int jj = 0; jj < 2; jj++)
