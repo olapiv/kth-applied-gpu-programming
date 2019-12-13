@@ -84,13 +84,13 @@ int main(int argc, char **argv){
     cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
     cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
     for (int is=0; is < param.ns; is++){
-        particle_allocate_gpu(&part[is], &particlesGPU[is]);  // Correct the pointers of the arrays
+        particle_copy_cpu2gpu(&part[is], &particlesGPU[is]);  // Correct the pointers of the arrays
     }
 
     EMfield *fieldGPU;
     cudaMalloc(&fieldGPU, sizeof(EMfield));
     cudaMemcpy(fieldGPU, &field, sizeof(EMfield), cudaMemcpyHostToDevice);
-    field_allocate_gpu(&grd, &field, fieldGPU);  // Correct the pointers of the arrays
+    field_copy_cpu2gpu(&grd, &field, fieldGPU);  // Correct the pointers of the arrays
 
     struct grid *grdGPU;
     cudaMalloc(&grdGPU, sizeof(grid));
@@ -105,7 +105,7 @@ int main(int argc, char **argv){
     interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];
     cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
     for (int is=0; is < param.ns; is++)
-        interp_dens_species_allocate_gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
+        interp_dens_species_copy_cpu2gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
     std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
 
     int largestNumParticles = 0;

@@ -74,24 +74,24 @@ void particle_deallocate(struct particles* part)
 }
 
 /** allocate particle arrays */
-void particle_allocate_gpu(struct particles* part, struct particles* particlesGPU)
+void particle_copy_cpu2gpu(struct particles* part, struct particles* particlesGPU)
 {    
     FPpart *dev_x, *dev_y, *dev_z, *dev_u, *dev_v, *dev_w, *dev_q;
-    cudaMalloc(&dev_x, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_y, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_z, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_u, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_v, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_w, npmax * sizeof(FPpart));
-    cudaMalloc(&dev_q, npmax * sizeof(FPpart));
+    cudaMalloc(&dev_x, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_y, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_z, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_u, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_v, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_w, part->npmax * sizeof(FPpart));
+    cudaMalloc(&dev_q, part->npmax * sizeof(FPpart));
 
-    cudaMemcpy(dev_x, part->x, npmax * sizeof(*dev_x), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_y, part->y, npmax * sizeof(*dev_y), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_z, part->z, npmax * sizeof(*dev_z), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_x, part->u, npmax * sizeof(*dev_u), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_x, part->v, npmax * sizeof(*dev_v), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_x, part->w, npmax * sizeof(*dev_w), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_q, part->q, npmax * sizeof(*dev_q), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_x, part->x, part->npmax * sizeof(*dev_x), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_y, part->y, part->npmax * sizeof(*dev_y), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_z, part->z, part->npmax * sizeof(*dev_z), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_x, part->u, part->npmax * sizeof(*dev_u), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_x, part->v, part->npmax * sizeof(*dev_v), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_x, part->w, part->npmax * sizeof(*dev_w), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_q, part->q, part->npmax * sizeof(*dev_q), cudaMemcpyHostToDevice);
 
     cudaMemcpy(&(particlesGPU->x), &dev_x, sizeof(particlesGPU->x), cudaMemcpyHostToDevice);
     cudaMemcpy(&(particlesGPU->y), &dev_y, sizeof(particlesGPU->y), cudaMemcpyHostToDevice);
@@ -134,18 +134,18 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
         
         // calculate weights
         long xi0_index_flat = get_idx(ix - 1, iy, iz, grd->nyn, grd->nzn);
-        xi[0]   = part->x[particle_index] - grd->XN[xi0_index_flat];
+        xi[0]   = part->x[particle_index] - grd->XN_flat[xi0_index_flat];
 
         long eta0_index_flat = get_idx(ix, iy - 1, iz, grd->nyn, grd->nzn);
-        eta[0]  = part->y[particle_index] - grd->YN[eta0_index_flat];
+        eta[0]  = part->y[particle_index] - grd->YN_flat[eta0_index_flat];
 
         long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
-        zeta[0] = part->z[particle_index] - grd->ZN[zeta0_index_flat];
+        zeta[0] = part->z[particle_index] - grd->ZN_flat[zeta0_index_flat];
 
-        long 1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-        xi[1]   = grd->XN[1_index_flat] - part->x[particle_index];
-        eta[1]  = grd->YN[1_index_flat] - part->y[particle_index];
-        zeta[1] = grd->ZN[1_index_flat] - part->z[particle_index];
+        long index_flat_1 = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+        xi[1]   = grd->XN_flat[index_flat_1] - part->x[particle_index];
+        eta[1]  = grd->YN_flat[index_flat_1] - part->y[particle_index];
+        zeta[1] = grd->ZN_flat[index_flat_1] - part->z[particle_index];
 
         for (int ii = 0; ii < 2; ii++)
             for (int jj = 0; jj < 2; jj++)
@@ -159,12 +159,12 @@ __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* 
             for (int jj=0; jj < 2; jj++)
                 for(int kk=0; kk < 2; kk++){
                     long index_flat = get_idx(ix- ii, iy -jj, iz- kk, grd->nyn, grd->nzn);
-                    Exl += weight[ii][jj][kk]*field->Ex[index_flat];
-                    Eyl += weight[ii][jj][kk]*field->Ey[index_flat];
-                    Ezl += weight[ii][jj][kk]*field->Ez[index_flat];
-                    Bxl += weight[ii][jj][kk]*field->Bxn[index_flat];
-                    Byl += weight[ii][jj][kk]*field->Byn[index_flat];
-                    Bzl += weight[ii][jj][kk]*field->Bzn[index_flat];
+                    Exl += weight[ii][jj][kk]*field->Ex_flat[index_flat];
+                    Eyl += weight[ii][jj][kk]*field->Ey_flat[index_flat];
+                    Ezl += weight[ii][jj][kk]*field->Ez_flat[index_flat];
+                    Bxl += weight[ii][jj][kk]*field->Bxn_flat[index_flat];
+                    Byl += weight[ii][jj][kk]*field->Byn_flat[index_flat];
+                    Bzl += weight[ii][jj][kk]*field->Bzn_flat[index_flat];
                 }
         
         // end interpolation
@@ -266,11 +266,9 @@ __global__ void gpu_mover_PC(particles* parts, EMfield* field, grid* grd, parame
         return;
     }
 
-    // start subcycling
-    for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++) {
-        subcycle_single_particle(part, field, grd, param, index_x);
-    }
+    subcycle_single_particle(part, field, grd, param, index_x);
 }
+
 
 void gpu_mover_PC_wrapper(particles* parts, EMfield* field, grid* grd, parameters* param, int largestNumParticles) {
     gpu_mover_PC<<<dim3(largestNumParticles / TpBx + 1, 1, 1), dim3(TpBx, param->ns, 1)>>>(parts, field, grd, param);
@@ -286,7 +284,7 @@ int mover_PC(struct particles* part, struct EMfield* field, struct grid* grd, st
     for (int i_sub=0; i_sub <  part->n_sub_cycles; i_sub++){
         // move each particle with new fields
         for (int i=0; i <  part->nop; i++){
-            subcycle_single_particle(part, field, grd, param, i);                                                            
+            //subcycle_single_particle(part, field, grd, param, i);                                                            
         }  // end of subcycling
     } // end of one particle
 
@@ -311,18 +309,18 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
 
     // distances from node
     long xi0_index_flat = get_idx(ix - 1, iy, iz, grd->nyn, grd->nzn);
-    xi[0]   = part->x[particle_index] - grd->XN[xi0_index_flat];
+    xi[0]   = part->x[particle_index] - grd->XN_flat[xi0_index_flat];
 
     long eta0_index_flat = get_idx(ix, iy - 1, iz, grd->nyn, grd->nzn);
-    eta[0]  = part->y[particle_index] - grd->YN[eta0_index_flat];
+    eta[0]  = part->y[particle_index] - grd->YN_flat[eta0_index_flat];
 
     long zeta0_index_flat = get_idx(ix, iy, iz - 1, grd->nyn, grd->nzn);
-    zeta[0] = part->z[particle_index] - grd->ZN[zeta0_index_flat];
+    zeta[0] = part->z[particle_index] - grd->ZN_flat[zeta0_index_flat];
 
-    long 1_index_flat = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
-    xi[1]   = grd->XN[1_index_flat] - part->x[particle_index];
-    eta[1]  = grd->YN[1_index_flat] - part->y[particle_index];
-    zeta[1] = grd->ZN[1_index_flat] - part->z[particle_index];
+    long index_flat_1 = get_idx(ix, iy, iz, grd->nyn, grd->nzn);
+    xi[1]   = grd->XN_flat[index_flat_1] - part->x[particle_index];
+    eta[1]  = grd->YN_flat[index_flat_1] - part->y[particle_index];
+    zeta[1] = grd->ZN_flat[index_flat_1] - part->z[particle_index];
 
     // calculate the weights for different nodes
     for (int ii = 0; ii < 2; ii++)
@@ -336,7 +334,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long rhon_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->rhon[rhon_index_flat] += weight[ii][jj][kk] * grd->invVOL;
+                ids->rhon_flat[rhon_index_flat] += weight[ii][jj][kk] * grd->invVOL;
             }
 
 
@@ -351,7 +349,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long jx_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->Jx[jx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->Jx_flat[jx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
     ////////////////////////////
@@ -366,7 +364,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long jy_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->Jy[jy_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->Jy_flat[jy_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
 
@@ -382,7 +380,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long jz_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->Jz[jz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->Jz_flat[jz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
     ////////////////////////////
@@ -396,7 +394,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pxx_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pxx[pxx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pxx_flat[pxx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
 
@@ -411,7 +409,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pxx_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pxy[pxx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pxy_flat[pxx_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
 
@@ -426,7 +424,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pxz_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pxz[pxz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pxz_flat[pxz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
     /////////////////////////////
@@ -440,7 +438,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pyy_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pyy[pyy_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pyy_flat[pyy_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
     /////////////////////////////
@@ -454,7 +452,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pyz_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pyz[pyz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pyz_flat[pyz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
     /////////////////////////////
@@ -468,7 +466,7 @@ __device__ void interpolate_single_particle(particles* part,interpDensSpecies* i
         for (int jj = 0; jj < 2; jj++)
             for (int kk = 0; kk < 2; kk++) {
                 long pzz_index_flat = get_idx(ix - ii, iy - jj, iz - kk, grd->nyn, grd->nzn);
-                ids->pzz[pzz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
+                ids->pzz_flat[pzz_index_flat] += temp[ii][jj][kk] * grd->invVOL;
             }
 
 }
@@ -493,6 +491,6 @@ void gpu_interpP2G_wrapper(particles* parts, interpDensSpecies* ids, grid* grd, 
 void interpP2G(particles* part, interpDensSpecies* ids, grid* grd)
 {    
     for (register long long i = 0; i < part->nop; i++) {
-        interpolate_single_particle(part, ids, grd, i);
+        //interpolate_single_particle(part, ids, grd, i);
     }
 }

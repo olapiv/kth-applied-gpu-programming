@@ -2,7 +2,7 @@
 
 
 /** allocate electric and magnetic field */
-void field_allocate_gpu(struct grid* grd, struct EMfield* field, struct EMfield* fieldGPU)
+void field_copy_cpu2gpu(struct grid* grd, struct EMfield* field, struct EMfield* fieldGPU)
 {
 
     FPfield *dev_fieldEx, *dev_fieldEy, *dev_fieldEz, *dev_fieldBxn, *dev_fieldByn, *dev_fieldBzn;
@@ -21,12 +21,12 @@ void field_allocate_gpu(struct grid* grd, struct EMfield* field, struct EMfield*
     cudaMemcpy(dev_fieldByn, field->Byn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_fieldBzn, field->Bzn_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
-    cudaMemcpy(&(fieldGPU->Ex), &dev_fieldEx, sizeof(fieldGPU->Ex), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(fieldGPU->Ey), &dev_fieldEy, sizeof(fieldGPU->Ey), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(fieldGPU->Ez), &dev_fieldEz, sizeof(fieldGPU->Ez), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(fieldGPU->Bxn), &dev_fieldBxn, sizeof(fieldGPU->Bxn), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(fieldGPU->Byn), &dev_fieldByn, sizeof(fieldGPU->Byn), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(fieldGPU->Bzn), &dev_fieldBzn, sizeof(fieldGPU->Bzn), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Ex_flat), &dev_fieldEx, sizeof(fieldGPU->Ex_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Ey_flat), &dev_fieldEy, sizeof(fieldGPU->Ey_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Ez_flat), &dev_fieldEz, sizeof(fieldGPU->Ez_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Bxn_flat), &dev_fieldBxn, sizeof(fieldGPU->Bxn_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Byn_flat), &dev_fieldByn, sizeof(fieldGPU->Byn_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(fieldGPU->Bzn_flat), &dev_fieldBzn, sizeof(fieldGPU->Bzn_flat), cudaMemcpyHostToDevice);
 
 }
 

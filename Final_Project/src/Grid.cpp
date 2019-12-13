@@ -13,9 +13,9 @@ void setGridGPU(struct parameters* param, struct grid* grd, struct grid* grdGPU)
     cudaMemcpy(dev_grdYN, grd->YN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_grdZN, grd->ZN_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPfield), cudaMemcpyHostToDevice);
 
-    cudaMemcpy(&(grdGPU->XN), &dev_grdXN, sizeof(grdGPU->XN), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(grdGPU->YN), &dev_grdYN, sizeof(grdGPU->YN), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(grdGPU->ZN), &dev_grdZN, sizeof(grdGPU->ZN), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->XN_flat), &dev_grdXN, sizeof(grdGPU->XN_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->YN_flat), &dev_grdYN, sizeof(grdGPU->YN_flat), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(grdGPU->ZN_flat), &dev_grdZN, sizeof(grdGPU->ZN_flat), cudaMemcpyHostToDevice);
 
 }
 

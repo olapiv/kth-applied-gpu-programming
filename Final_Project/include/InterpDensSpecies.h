@@ -38,5 +38,5 @@ void interp_dens_species_deallocate(struct grid* grd, struct interpDensSpecies* 
 /** deallocate interpolated densities per species */
 void interpN2Crho(struct interpDensSpecies* ids, struct grid* grd);
 
-void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies* ids, struct interpDensSpecies* idsGPU);
+void interp_dens_species_copy_cpu2gpu(struct grid* grd, struct interpDensSpecies* ids, struct interpDensSpecies* idsGPU);
 #endif

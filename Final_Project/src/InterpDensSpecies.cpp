@@ -2,7 +2,7 @@
 
 
 /** allocated interpolated densities per species */
-void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies* ids, struct interpDensSpecies* idsGPU)
+void interp_dens_species_copy_cpu2gpu(struct grid* grd, struct interpDensSpecies* ids, struct interpDensSpecies* idsGPU)
 {
     FPinterp *dev_ids_rhon, *dev_ids_rhoc, *dev_ids_Jx, *dev_ids_Jy, *dev_ids_Jz, *dev_ids_pxx, *dev_ids_pxy, *dev_ids_pxz, *dev_ids_pyy, *dev_ids_pyz, *dev_ids_pzz;
 
@@ -30,17 +30,17 @@ void interp_dens_species_allocate_gpu(struct grid* grd, struct interpDensSpecies
     cudaMemcpy(dev_ids_pyz, ids->pyz_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_ids_pzz, ids->pzz_flat, grd->nxn * grd->nyn * grd->nzn * sizeof(FPinterp), cudaMemcpyHostToDevice);
 
-    cudaMemcpy(&(idsGPU->rhon), &dev_ids_rhon_flat, sizeof(idsGPU->rhon), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->rhoc), &dev_ids_rhoc_flat, sizeof(idsGPU->rhoc), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->Jx), &dev_ids_Jx, sizeof(idsGPU->Jx), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->Jy), &dev_ids_Jy, sizeof(idsGPU->Jy), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->Jz), &dev_ids_Jz, sizeof(idsGPU->Jz), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pxx), &dev_ids_pxx, sizeof(idsGPU->pxx), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pxy), &dev_ids_pxy, sizeof(idsGPU->pxy), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pxz), &dev_ids_pxz, sizeof(idsGPU->pxz), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pyy), &dev_ids_pyy, sizeof(idsGPU->pyy), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pyz), &dev_ids_pyz, sizeof(idsGPU->pyz), cudaMemcpyHostToDevice);
-    cudaMemcpy(&(idsGPU->pzz), &dev_ids_pzz, sizeof(idsGPU->pzz), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->rhon_flat), &dev_ids_rhon, sizeof(idsGPU->rhon), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->rhoc_flat), &dev_ids_rhoc, sizeof(idsGPU->rhoc), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->Jx_flat), &dev_ids_Jx, sizeof(idsGPU->Jx), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->Jy_flat), &dev_ids_Jy, sizeof(idsGPU->Jy), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->Jz_flat), &dev_ids_Jz, sizeof(idsGPU->Jz), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pxx_flat), &dev_ids_pxx, sizeof(idsGPU->pxx), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pxy_flat), &dev_ids_pxy, sizeof(idsGPU->pxy), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pxz_flat), &dev_ids_pxz, sizeof(idsGPU->pxz), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pyy_flat), &dev_ids_pyy, sizeof(idsGPU->pyy), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pyz_flat), &dev_ids_pyz, sizeof(idsGPU->pyz), cudaMemcpyHostToDevice);
+    cudaMemcpy(&(idsGPU->pzz_flat), &dev_ids_pzz, sizeof(idsGPU->pzz), cudaMemcpyHostToDevice);
 }
 
 /** allocated interpolated densities per species */

@@ -68,5 +68,5 @@ void interpP2G(struct particles*, struct interpDensSpecies*, struct grid*);
 void gpu_mover_PC_wrapper(struct particles*, struct EMfield*, struct grid*, struct parameters*, int);
 void gpu_interpP2G_wrapper(struct particles*, struct interpDensSpecies*, struct grid*, struct parameters*, int);
 
-void particle_allocate_gpu(struct particles* part, struct particles* particlesGPU);
+void particle_copy_cpu2gpu(struct particles* part, struct particles* particlesGPU);
 #endif
