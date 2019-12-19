@@ -101,11 +101,16 @@ int main(int argc, char **argv){
     cudaMalloc(&paramGPU, sizeof(parameters));
     cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
 
+    struct idsDataOneParticle {
+        FPinterp *dev_ids_rhon, *dev_ids_rhoc, *dev_ids_Jx, *dev_ids_Jy, *dev_ids_Jz, *dev_ids_pxx, *dev_ids_pxy, *dev_ids_pxz, *dev_ids_pyy, *dev_ids_pyz, *dev_ids_pzz;
+    };
+    idsDataOneParticle *arrayOfIDSStructs = new idsDataOneParticle[param.ns];
+
     interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
     interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];
     cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
     for (int is=0; is < param.ns; is++)
-        interp_dens_species_copy_cpu2gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
+        interp_dens_species_allocate_gpu(&grd, &idsGPU2CPU[is], &idsGPU[is], &arrayOfIDSStructs[is]);  // Correct the pointers of the arrays
     std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
 
     int largestNumParticles = 0;
@@ -131,6 +136,8 @@ int main(int argc, char **argv){
         setZeroDensities(&idn, idsGPU2CPU, &grd, param.ns);  // New for GPU
 
         cudaMemcpy(idsGPU, idsGPU2CPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyHostToDevice);
+        for (int is=0; is < param.ns; is++)
+            interp_dens_species_copy_cpu2gpu(&grd, &idsGPU2CPU[is], &idsGPU[is], &arrayOfIDSStructs[is]);  // Correct the pointers of the arrays
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
