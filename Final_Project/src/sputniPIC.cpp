@@ -84,7 +84,7 @@ int main(int argc, char **argv){
     cudaMalloc(&particlesGPU, sizeof(particles) * param.ns);
     cudaMemcpy(particlesGPU, part, sizeof(particles) * param.ns, cudaMemcpyHostToDevice);
     for (int is=0; is < param.ns; is++){
-        particle_copy_cpu2gpu(&part[is], &particlesGPU[is]);  // Correct the pointers of the arrays
+        particle_allocate_gpu(&part[is], &particlesGPU[is]);  // Correct the pointers of the arrays
     }
 
     EMfield *fieldGPU;
@@ -102,11 +102,12 @@ int main(int argc, char **argv){
     cudaMemcpy(paramGPU, &param, sizeof(parameters), cudaMemcpyHostToDevice);
 
     interpDensSpecies *idsGPU = new interpDensSpecies[param.ns];
-    interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];
+    interpDensSpecies *idsGPUPointers = new interpDensSpecies[param.ns];
+    interpDensSpecies *idsGPU2CPU = new interpDensSpecies[param.ns];  // Created to compare values with CPU calculations
+    std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
     cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
     for (int is=0; is < param.ns; is++)
-        interp_dens_species_copy_cpu2gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
-    std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
+        interp_dens_species_allocate(&grd, &idsGPU2CPU[is], &idsGPU[is]);  // Correct the pointers of the arrays
 
     int largestNumParticles = 0;
     for (int i = 0; i < param.ns; i++) {
@@ -130,7 +131,8 @@ int main(int argc, char **argv){
         // setZeroDensities(&idn, ids, &grd, param.ns);
         setZeroDensities(&idn, idsGPU2CPU, &grd, param.ns);  // New for GPU
 
-        cudaMemcpy(idsGPU, idsGPU2CPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyHostToDevice);
+        for (int is=0; is < param.ns; is++)
+            interp_dens_species_cpu2gpu(&grd, &idsGPU2CPU[is], &idsGPU[is]);  // Correct the pointers of the arrays
         
         // implicit mover
         iMover = cpuSecond(); // start timer for mover
@@ -150,7 +152,8 @@ int main(int argc, char **argv){
         // Only ids is changed
         gpu_interpP2G_wrapper(particlesGPU, idsGPU, grdGPU, paramGPU, largestNumParticles);
 
-        cudaMemcpy(idsGPU2CPU, idsGPU, sizeof(interpDensSpecies) * param.ns, cudaMemcpyDeviceToHost);
+        for (int is=0; is < param.ns; is++)
+            interp_dens_species_gpu2cpu(&grd, &idsGPU2CPU[is], &idsGPU[is]);  // Correct the pointers of the arrays
 
         // apply BC to interpolated densities
         // Only ids is changed
@@ -182,26 +185,28 @@ int main(int argc, char **argv){
         eInterp += (cpuSecond() - iInterp); // stop timer for interpolation
         
     }  // end of one PIC cycle
-    
-    // GPU de-allocation:
-    cudaFree(particlesGPU);
-    cudaFree(fieldGPU);
-    cudaFree(grdGPU);
-    cudaFree(paramGPU);
 
     /// Release the resources
-    // deallocate field
     grid_deallocate(&grd);
     field_deallocate(&grd,&field);
-    // interp
     interp_dens_net_deallocate(&grd,&idn);
     
     // Deallocate interpolated densities and particles
     for (int is=0; is < param.ns; is++){
-        interp_dens_species_deallocate(&grd,&ids[is]);
-        interp_dens_species_deallocate(&grd,&idsGPU2CPU[is]);  // New for GPU
+        interp_dens_species_deallocate(&grd, &ids[is]);
+        interp_dens_species_deallocate(&grd, &idsGPU2CPU[is]);  // New for GPU
         particle_deallocate(&part[is]);
+
+        ids_gpu_deallocate(&idsGPU[is]);  // New for GPU
+        particle_deallocate_gpu(&particlesGPU[is]);  // New for GPU
     }
+
+    // GPU de-allocation:
+    cudaFree(fieldGPU);
+    cudaFree(grdGPU);
+    cudaFree(paramGPU);
+    cudaFree(idsGPU);
+    cudaFree(particlesGPU);
     
     
     // stop timer

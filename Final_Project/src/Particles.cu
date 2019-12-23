@@ -74,9 +74,10 @@ void particle_deallocate(struct particles* part)
 }
 
 /** allocate particle arrays */
-void particle_copy_cpu2gpu(struct particles* part, struct particles* particlesGPU)
+void particle_allocate_gpu(struct particles* part, struct particles* particlesGPU)
 {    
     FPpart *dev_x, *dev_y, *dev_z, *dev_u, *dev_v, *dev_w, *dev_q;
+
     cudaMalloc(&dev_x, part->npmax * sizeof(FPpart));
     cudaMalloc(&dev_y, part->npmax * sizeof(FPpart));
     cudaMalloc(&dev_z, part->npmax * sizeof(FPpart));
@@ -93,6 +94,7 @@ void particle_copy_cpu2gpu(struct particles* part, struct particles* particlesGP
     cudaMemcpy(dev_x, part->w, part->npmax * sizeof(*dev_w), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_q, part->q, part->npmax * sizeof(*dev_q), cudaMemcpyHostToDevice);
 
+    // Binding pointers
     cudaMemcpy(&(particlesGPU->x), &dev_x, sizeof(particlesGPU->x), cudaMemcpyHostToDevice);
     cudaMemcpy(&(particlesGPU->y), &dev_y, sizeof(particlesGPU->y), cudaMemcpyHostToDevice);
     cudaMemcpy(&(particlesGPU->z), &dev_z, sizeof(particlesGPU->z), cudaMemcpyHostToDevice);
@@ -100,6 +102,18 @@ void particle_copy_cpu2gpu(struct particles* part, struct particles* particlesGP
     cudaMemcpy(&(particlesGPU->v), &dev_v, sizeof(particlesGPU->v), cudaMemcpyHostToDevice);
     cudaMemcpy(&(particlesGPU->w), &dev_w, sizeof(particlesGPU->w), cudaMemcpyHostToDevice);
     cudaMemcpy(&(particlesGPU->q), &dev_q, sizeof(particlesGPU->q), cudaMemcpyHostToDevice);
+}
+
+/** allocated interpolated densities per species */
+void particle_deallocate_gpu(struct particles* part)
+{
+    cudaFree(part->x);
+    cudaFree(part->y);
+    cudaFree(part->z);
+    cudaFree(part->u);
+    cudaFree(part->v);
+    cudaFree(part->w);
+    cudaFree(part->q);
 }
 
 __device__ void subcycle_single_particle(particles* part, EMfield* field, grid* grd, parameters* param, int particle_index) {
