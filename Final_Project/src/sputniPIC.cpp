@@ -106,7 +106,7 @@ int main(int argc, char **argv){
     cudaMalloc(&idsGPU, sizeof(interpDensSpecies) * param.ns);
     for (int is=0; is < param.ns; is++)
         interp_dens_species_copy_cpu2gpu(&grd, &ids[is], &idsGPU[is]);  // Correct the pointers of the arrays
-    std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done in every iteration
+    std::memcpy(idsGPU2CPU, &ids, sizeof(interpDensSpecies) * param.ns);  // cudaMemcpy is done later (in every iteration)
 
     int largestNumParticles = 0;
     for (int i = 0; i < param.ns; i++) {
